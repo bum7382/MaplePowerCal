@@ -1,0 +1,92 @@
+[
+   {
+      "label":"몬스터 방어율 무시",
+      "type":"percent",
+      "id":1,
+      "template":"몬스터 방어율 무시 +{value}%"
+   },
+   {
+      "label":"공격력 % 증가",
+      "type":"percent",
+      "id":2,
+      "template":"공격력 +{value}%"
+   },
+   {
+      "label":"마력 % 증가",
+      "type":"percent",
+      "id":3,
+      "template":"마력 +{value}%"
+   },
+   {
+      "label":"보스 몬스터 데미지",
+      "type":"percent",
+      "id":4,
+      "template":"보스 몬스터 데미지 +{value}%"
+   },
+   {
+      "label":"크리티컬 확률 증가",
+      "type":"percent",
+      "id":5,
+      "template":"크리티컬 확률 +{value}%"
+   },
+   {
+      "label":"공격력 증가",
+      "type":"flat",
+      "id":6,
+      "template":"공격력 +{value}"
+   },
+   {
+      "label":"마력 증가",
+      "type":"flat",
+      "id":7,
+      "template":"마력 +{value}"
+   },
+   {
+      "label":"STR 증가",
+      "type":"flat",
+      "id":8,
+      "template":"STR +{value}"
+   },
+   {
+      "label":"LUK 증가",
+      "type":"flat",
+      "id":9,
+      "template":"LUK +{value}"
+   },
+   {
+      "label":"DEX 증가",
+      "type":"flat",
+      "id":10,
+      "template":"DEX +{value}"
+   },
+   {
+      "label":"INT 증가",
+      "type":"flat",
+      "id":11,
+      "template":"INT +{value}"
+   },
+   {
+      "label":"올스탯 증가",
+      "type":"flat",
+      "id":12,
+      "template":"올스탯 +{value}"
+   },
+   {
+      "label":"올스탯 % 증가",
+      "type":"percent",
+      "id":13,
+      "template":"올스탯 +{value}%"
+   },
+   {
+      "label":"최대 HP 증가",
+      "type":"flat",
+      "id":14,
+      "template":"최대 HP +{value}"
+   },
+   {
+      "label":"최대 MP 증가",
+      "type":"flat",
+      "id":15,
+      "template":"최대 MP +{value}"
+   }
+]

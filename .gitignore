@@ -1,0 +1,13 @@
+# ===== 공통 =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.log
+.vercel
+
+# ===== frontend =====
+node_modules/
+dist/
+apitest.js

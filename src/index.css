@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+
+@font-face {
+    font-family: 'MaplestoryOTFBold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+  font-family: 'morris9';
+  src: url('/public/fonts/morris9.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'KOHIBaeum';
+  src: url('/public/fonts/KOHIBaeum.ttf') format('truetype');
+}
+

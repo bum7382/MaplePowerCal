@@ -1,0 +1,61 @@
+// 부위 이름 (subcategory 기준)
+export const CATEGORY_KR_MAP = {
+  Hat: "모자",
+  Shoulder: "견장",
+  Cape: "망토",
+  Glove: "장갑",
+  Weapon: "무기",
+  SubWeapon: "보조무기",
+  Emblem: "엠블렘",
+  Medal: "훈장",
+  Ring: "반지",
+  Pendant: "펜던트",
+  Belt: "벨트",
+  Shoes: "신발",
+  Android: "안드로이드",
+  Pocket: "포켓 아이템",
+  Badge: "배지",
+};
+
+// 직업군 이름
+export const JOBTREE_KR_MAP = {
+  warrior: "전사",
+  magician: "마법사",
+  archer: "궁수",
+  thief: "도적",
+  pirate: "해적",
+  xenon: "제논",
+  all: "공용",
+};
+
+// 옵션 이름 (stat key → 한글 이름)
+export const STAT_KR_MAP = {
+  str: "힘",
+  dex: "민첩",
+  int: "지력",
+  luk: "행운",
+  max_hp: "최대 HP",
+  max_mp: "최대 MP",
+  attack_power: "공격력",
+  magic_power: "마력",
+  armor: "방어력",
+  defense: "방어력",
+  speed: "이동속도",
+  jump: "점프력",
+  boss_damage: "보스 몬스터 데미지",
+  bossRate: "보스 몬스터 데미지",
+  ignore_monster_armor: "몬스터 방어율 무시",
+  ignoreDefense: "몬스터 방어율 무시",
+  all_stat: "올스탯",
+  damage: "데미지",
+  max_hp_rate: "HP% 증가",
+  max_mp_rate: "MP% 증가",
+  equipment_level_decrease: "장비 레벨 감소",
+  accuracy: "명중률",
+  avoidability: "회피율",
+  charm: "매력",
+  critical_rate: "크리티컬 확률",
+  critical_damage: "크리티컬 데미지",
+  starforce: "스타포스",
+  soul_option: "소울 옵션",
+};
