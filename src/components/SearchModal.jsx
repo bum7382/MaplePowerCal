@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
 import { useToast } from "../utils/toastContext.jsx";
+import { initcalPower } from "../utils/initcalPower.js";
 
 export default function SearchModal({ onClose, onSearch}) {
   const [inputValue, setInputValue] = useState("");
@@ -30,21 +31,35 @@ export default function SearchModal({ onClose, onSearch}) {
       showToast("❌ 캐릭터 이름을 입력하세요.", "error");
       return;
     }
-
     const result = await fetchCharacterByName(inputValue.trim());
     if (!result || result?.error) {
       showToast("❌ 캐릭터를 찾을 수 없습니다.", "error");
       return;
     }
-    console.log("🔍 검색 결과:", result);
+    const basicPowerChar = {
+      class: result.character_class,  // 캐릭터 직업
+      level: result.character_level,  // 캐릭터 레벨
+      title: result.title,            // 칭호
+      hyperStat: result.hyperStat,    // 하이퍼 스탯
+      ability: result.ability,        // 어빌리티
+      symbol: result.symbol,          // 심볼 정보
+      skill: result.skill,            // 0차 스킬
+      hexa_stat: result.hexa_stat,    // 헥사스킬
+      union: result.union,            // 유니온
+      artifact: result.artifact,      // 아티팩트
+      champion: result.champion       // 유니온 챔피언
+    }
+    const { baseStat, noPerStat } = initcalPower(basicPowerChar);
     const mappedChar = {
-      name: result.character_name,      // 캐릭터 이름
-      image: result.character_image,    // 캐릭터 이미지
-      class: result.character_class,    // 캐릭터 직업
-      stat: result.final_stat,          // 최종 스탯
-      equipment: result.item_equipment, // 장비 정보
+      name: result.character_name,    // 캐릭터 이름
+      class: result.character_class,  // 캐릭터 직업
+      level: result.character_level,  // 캐릭터 레벨
+      image: result.character_image,  // 캐릭터 이미지 URL
+      equipment: result.item,         // 장비
+      baseStat: baseStat,
+      noPerStat: noPerStat,
     };
-
+    console.log({ baseStat, noPerStat });
     addRecent(result.character_name);
     const success = await onSearch(mappedChar);
     if (success) {

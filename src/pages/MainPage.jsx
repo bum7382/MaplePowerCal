@@ -186,25 +186,6 @@ export default function MainPage() {
   return (
     <div className="relative w-screen h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat select-none"
          style={{ backgroundImage: "url(/images/background_blur.png)" }}>
-      {!baseStats && (
-        <div className="absolute top-[173px] left-1/2 transform -translate-x-1/2 z-30 bg-red-600 text-white font-morris px-4 py-2 rounded shadow">
-          ⚠️ 캐릭터를 클릭하여 기본 능력치를 먼저 입력해주세요.
-        </div>
-      )}
-      {showModal && character && (() => {
-        const jobInfo = jobStat.find(j => j.class === character.class);
-        if (!jobInfo) return null;
-        return (
-          <BasicStatModal
-            jobClass={character.class}
-            mainStat={jobInfo.main_stat}
-            subStat={jobInfo.sub_stat}
-            isMagicClass={jobInfo.main_stat === "INT"}
-            onSave={handleSaveBaseStats}
-            onClose={() => setShowModal(false)}
-          />
-        );
-      })()}
       <div className="relative w-[420px] aspect-[420/509] ">
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
         <img src="/images/inventory/equipmentUI.png" draggable="false" className="absolute top-[70px] left-[17px] w-[390px]" />

@@ -12,32 +12,26 @@ function buildTemplateRegex(template) {
 }
 
 
-export function calculatePower(equipments, jobClass, originalIsGenesis = null, baseStatsInput = null, characterLevel = 0) {
-  const jobInfo = jobStat.find(j => j.class === jobClass);
+export function calculatePower(equipments, character_class, baseStat, noPerStat, character_level = 0) {
+  const jobInfo = jobStat.find(j => j.class === character_class);
   if (!jobInfo) return 0;
+
+  const perStat = {
+    STR: 0,
+    DEX: 0,
+    INT: 0,
+    LUK: 0,
+    atk: 0,
+    magic: 0,
+  };
 
   // 주스탯이 INT일 경우 공격력이 아닌 마력 사용
   const isMagicClass = jobInfo.main_stat === "INT";
-
-  const statKeys = ["STR", "DEX", "INT", "LUK", "HP"];
-  // flat 값
-  const baseStats = Object.fromEntries(statKeys.map(k => [k, 0]));
-  // percent 값
-  const percentStats = Object.fromEntries(statKeys.map(k => [k, 0]));
-
-  // 공격력/마력
-  let attack = 0, attackPercent = 0;
-  let magic = 0, magicPercent = 0;
-
-  // 보스 데미지, 최종 데미지, 크리티컬 데미지
-  let bossDmg = baseStatsInput?.bossDamage ?? 0;
-  let critDmg = 135 + (baseStatsInput?.critDamage ?? 0);
   
   // 세트 효과
   const setCountMap = {};
 
-  // 제네시스 무기인지 확인 -> 제네시스 무기일 경우 최종 데미지 1.1배, 아닐 경우 1배
-  // 기존에 제네시스 무기 -> 일반 무기로 변환 시 0.9배 되어야 함.
+  // 제네시스 무기일 경우 최종 데미지 1.1배, 아닐 경우 1배
   const weapon = equipments.find(eq => eq.item_equipment_slot === "무기");
   const currentIsGenesis = weapon?.item_name?.includes("제네시스");
   let finalDamage = currentIsGenesis ? 1.1 : 1.0;
@@ -49,29 +43,32 @@ export function calculatePower(equipments, jobClass, originalIsGenesis = null, b
     const etc = eq.item_etc_option || {}; // 주문서작
     const star = eq.item_starforce_option || {};  // 스타포스작
 
-    // 스탯 값 계산
-    for (let stat of ["str", "dex", "int", "luk", "hp"]) {
+    // 추옵 계산
+    // 기본 스탯 값 계산
+    for (let stat of ["str", "dex", "int", "luk"]) {
       const key = stat.toUpperCase();
-      const baseKey = stat === "hp" ? "max_hp" : stat;
-      baseStats[key] +=
+      baseStat[key] +=
         +(base[baseKey] || 0) + +(add[baseKey] || 0) + +(etc[baseKey] || 0) + +(star[baseKey] || 0);
     }
     // 올스탯 %
     const allPercent = +(base.all_stat || 0) + +(add.all_stat || 0) + +(etc.all_stat || 0) + +(star.all_stat || 0);
     if (allPercent > 0) {
       for (let key of ["STR", "DEX", "INT", "LUK"]) {
-        percentStats[key] += allPercent;
+        perStat[key] += allPercent;
       }
     }
 
     // 공격력 계산
-    attack += +(base.attack_power || 0) + +(add.attack_power || 0) + +(etc.attack_power || 0) + +(star.attack_power || 0);
+    baseStat.atk += +(base.attack_power || 0) + +(add.attack_power || 0) + +(etc.attack_power || 0) + +(star.attack_power || 0);
     
     // 마력 계산  
-    magic += +(base.magic_power || 0) + +(add.magic_power || 0) + +(etc.magic_power || 0) + +(star.magic_power || 0);
+    baseStat.magic += +(base.magic_power || 0) + +(add.magic_power || 0) + +(etc.magic_power || 0) + +(star.magic_power || 0);
 
-    // 보스 공격력 계산
-    bossDmg += +(base.boss_damage || 0) + +(add.boss_damage || 0);
+    // 보스 데미지 계산
+    baseStat.boss_damage += +(base.boss_damage || 0) + +(add.boss_damage || 0);
+
+    // 데미지 계산
+    baseStat.damage += +(base.damage || 0) + +(add.damage || 0)
 
     // 소울 옵션이 있을 경우 계산
     if (eq.soul_option) {
@@ -82,18 +79,17 @@ export function calculatePower(equipments, jobClass, originalIsGenesis = null, b
         const id = match.id;
 
         if (match.type === "percent") {
-          if (id == 4) bossDmg += val;
-          else if (id == 2) attackPercent += val;
-          else if (id == 3) magicPercent += val;
-          else if (id == 13) statKeys.forEach(k => percentStats[k] += val);
+          if (id == 4) baseStat.boss_damage += val;
+          else if (id == 2) perStat.atk += val;
+          else if (id == 3) perStat.magic += val;
+          else if (id == 13) statKeys.forEach(k => perStat[k] += val);
         } else if (match.type === "flat") {
-          if (id == 8) baseStats.STR += val;
-          else if (id == 9) baseStats.LUK += val;
-          else if (id == 10) baseStats.DEX += val;
-          else if (id == 11) baseStats.INT += val;
-          else if (id == 14) baseStats.HP += val;
-          else if (id == 6) attack += val;
-          else if (id == 7) magic += val;
+          if (id == 8) baseStat.STR += val;
+          else if (id == 9) baseStat.LUK += val;
+          else if (id == 10) baseStat.DEX += val;
+          else if (id == 11) baseStat.INT += val;
+          else if (id == 6) baseStat.atk += val;
+          else if (id == 7) baseStat.magic += val;
         }
       }
     }
@@ -126,36 +122,35 @@ export function calculatePower(equipments, jobClass, originalIsGenesis = null, b
           const interval = +levelMatch[1]; // 예: 9
           const statKey = levelMatch[2].toUpperCase(); // STR, DEX 등
           const perInterval = +levelMatch[3]; // 예: 1
-          const bonus = Math.floor(characterLevel / interval) * perInterval;
+          const bonus = Math.floor(character_level / interval) * perInterval;
           if (statKeys.includes(statKey)) {
-            baseStats[statKey] += bonus;
+            baseStat[statKey] += bonus;
           }
           continue;
         }
       }
       if (p.type === "percent") {
-        if (id == 4) bossDmg += val; // 보공
-        else if (id == 52) critDmg += val;  // 크뎀
+        if (id == 4) baseStat.boss_damage += val; // 보공
+        else if(id == 5) baseStat.damage += val;  // 데미지
+        else if (id == 52) baseStat.crit_damage += val;  // 크뎀
 
-        else if (id == 28) statKeys.forEach(k => percentStats[k] += val); // 올스탯 %
-        else if (id == 23) percentStats.STR += val; // STR %
-        else if (id == 24) percentStats.LUK += val; // LUK %
-        else if (id == 25) percentStats.DEX += val; // DEX %
-        else if (id == 26) percentStats.INT += val; // INT %
-        else if (id == 30) percentStats.HP += val;  // HP %
+        else if (id == 28) statKeys.forEach(k => perStat[k] += val); // 올스탯 %
+        else if (id == 23) perStat.STR += val; // STR %
+        else if (id == 24) perStat.LUK += val; // LUK %
+        else if (id == 25) perStat.DEX += val; // DEX %
+        else if (id == 26) perStat.INT += val; // INT %
  
-        else if (id == 2) attackPercent += val; // 공격력 %
-        else if (id == 3) magicPercent += val;  // 마력 %
+        else if (id == 2) perStat.atk += val; // 공격력 %
+        else if (id == 3) perStat.magic += val;  // 마력 %
       } else if (p.type === "flat") {
-        if (id == 27) statKeys.forEach(k => baseStats[k] += val); // 올스탯
-        else if (id == 19) baseStats.STR += val;  // STR
-        else if (id == 20) baseStats.LUK += val;  // LUK
-        else if (id == 21) baseStats.DEX += val;  // DEX
-        else if (id == 22) baseStats.INT += val;  // INT
-        else if (id == 29) baseStats.HP += val; // HP
+        if (id == 27) statKeys.forEach(k => baseStat[k] += val); // 올스탯
+        else if (id == 19) baseStat.STR += val;  // STR
+        else if (id == 20) baseStat.LUK += val;  // LUK
+        else if (id == 21) baseStat.DEX += val;  // DEX
+        else if (id == 22) baseStat.INT += val;  // INT
 
-        else if (id == 17) attack += val; // 공격력
-        else if (id == 18) magic += val;  // 마력
+        else if (id == 17) baseStat.atk += val; // 공격력
+        else if (id == 18) baseStat.magic += val;  // 마력
         
       }
     }
@@ -176,14 +171,13 @@ export function calculatePower(equipments, jobClass, originalIsGenesis = null, b
       if (!entry) continue;
       for (const [k, v] of Object.entries(entry)) {
         const key = k.replace(/ /g, "");
-        if (key === "공격력") attack += v;
-        else if (key === "마력") magic += v;
-        else if (key === "보스몬스터데미지") bossDmg += v;
+        if (key === "공격력") baseStat.atk += v;
+        else if (key === "마력") baseStat.magic += v;
+        else if (key === "보스몬스터데미지") baseStat.boss_damage += v;
         else if (key === "올스탯") {
-          for (let s of ["STR", "DEX", "INT", "LUK"]) baseStats[s] += v;
-        } else if (key === "최대HP") baseStats.HP += v;
-        else if (key === "최대HP%") percentStats.HP += v;
-        else if (key === "크리티컬데미지") critDmg += v;
+          for (let s of ["STR", "DEX", "INT", "LUK"]) baseStat[s] += v;
+        } 
+        else if (key === "크리티컬데미지") baseStat.crit_damage += v;
       }
     }
   }
@@ -192,37 +186,22 @@ export function calculatePower(equipments, jobClass, originalIsGenesis = null, b
   const main = jobInfo.main_stat;
   const sub = jobInfo.sub_stat;
 
-  const getFinalStat = (key) => {
-    const base = baseStatsInput?.[key] || 0;  // 기존 flat 값
-    const percent = baseStatsInput?.[`${key}Percent`] || 0; // 기존 percent 값
-    const fixed = baseStatsInput?.[`${key}Fixed`] || 0; // % 미적용 값
-    const itemFlat = baseStats[key] || 0; // 장비 flat 값
-    const itemPercent = percentStats[key] || 0; // 장비 percent 값
-    return Math.floor((base + itemFlat) * ((100 + percent + itemPercent) / 100)) + fixed;
-  };
-
-  const mainStat = getFinalStat(main);
-  const subStat = Array.isArray(sub) ? sub.reduce((a, s) => a + getFinalStat(s), 0) : getFinalStat(sub);
+  const mainStat = baseStat[main] * ((100 + perStat[main]) / 100) + noPerStat[main];
+  const subStat = subStat[sub] * ((100 + perStat[sub]) / 100) + noPerStat[sub]
   const finalStat = Math.floor((mainStat * 4 + subStat) / 100);
 
-  const atkBase = baseStatsInput?.[isMagicClass ? "magic" : "attack"] ?? 0;
-  const atkPercent = baseStatsInput?.[isMagicClass ? "magicPercent" : "attackPercent"] || 0;
-  const equipBase = isMagicClass ? magic : attack;
-  const equipPercent = isMagicClass ? magicPercent : attackPercent;
-  const finalAtk = Math.floor((atkBase + equipBase) * ((100 + atkPercent + equipPercent) / 100));
-
-  const finalBoss = bossDmg / 100;
-  const finalCrit = critDmg / 100;
+  const finalAtk = Math.floor((baseStat[isMagicClass ? "magic" : "atk"]) * ((100 + perStat[isMagicClass ? "magic" : "atk"]) / 100));
+  
+  const finalDmg = (100 + baseStat.boss_damage + baseStat.damage) / 100;
+  const finalCrit = (135 + baseStat.crit_damage) / 100;
   console.log("전투력 계산:", {
     mainStat,
     subStat, 
-    atkBase,
-    atkPercent,
-    equipBase,
-    equipPercent,
-    finalBoss,
+    finalStat,
+    finalAtk,
+    finalDmg,
     finalCrit,
   });
-  const power = Math.floor(finalStat * finalAtk * finalBoss * finalCrit * finalDamage);
+  const power = Math.floor(finalStat * finalAtk * finalDmg * finalCrit * finalDamage);
   return isNaN(power) ? 0 : power;
 }

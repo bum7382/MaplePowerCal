@@ -1,4 +1,46 @@
-// api/characterSearch.js
+// /api/characterSearch.js
+
+// 요청 딜레이 함수
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// fetch 요청 1개: 429면 최대 n회까지 재시도, 나머진 에러 throw
+async function fetchWithRetry(url, headers, retry = 2, delayMs = 1500) {
+  for (let i = 0; i <= retry; i++) {
+    const res = await fetch(url, { headers });
+    let body = null;
+    try {
+      body = await res.json();
+    } catch (e) {
+      throw new Error(`응답을 JSON으로 변환 실패: ${url} status:${res.status}`);
+    }
+    if (res.status === 429) {
+      if (i === retry) throw new Error(`429 오류: ${url} (최대 재시도 초과)`);
+      await delay(delayMs); // 쿨타임 대기 후 재시도
+      continue;
+    }
+    if (!res.ok || body.error) {
+      throw new Error(`API 실패: ${url} status:${res.status} body:${JSON.stringify(body)}`);
+    }
+    return body;
+  }
+}
+
+// fetch 여러 개를 n개씩 나눠서 순차적으로 호출하는 함수
+async function fetchWithLimit(requests, limit, delayMs) {
+  const results = [];
+  for (let i = 0; i < requests.length; i += limit) {
+    const batch = requests.slice(i, i + limit).map(fn => fn());
+    const batchResults = await Promise.all(batch);
+    results.push(...batchResults);
+    if (i + limit < requests.length) {
+      await delay(delayMs);
+    }
+  }
+  return results;
+}
+
 export default async function handler(req, res) {
   const { name } = req.query;
 
@@ -16,95 +58,91 @@ export default async function handler(req, res) {
     }
     const ocid = idResBody.ocid;
 
-    // ocid로 각종 정보 병렬 요청
-    const [
-      infoRes,     // 2. 캐릭터 기본 정보
-      statRes,     // 3. 스탯 정보
-      itemRes,     // 4. 장비 정보
-      hyperRes,    // 5. 하이퍼 스탯
-      abilityRes,  // 6. 어빌리티
-      symbolRes,   // 7. 심볼
-      skillRes,    // 8. 0차 스킬
-      hexaRes,     // 9. 헥사 스텟
-      unionRes,    // 10. 유니온 공격대
-      artifactRes, // 11. 유니온 아티팩트
-      championRes  // 12. 유니온 챔피언
-    ] = await Promise.all([
-      fetch(`${API_URL}/maplestory/v1/character/basic?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/stat?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/item-equipment?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/hyper-stat?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/ability?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/symbol-equipment?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/skill?ocid=${ocid}&character_skill_grade=0`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/hexamatrix-stat?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/union-raider?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/union-artifact?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      }),
-      fetch(`${API_URL}/maplestory/v1/character/union-champion?ocid=${ocid}`, {
-        headers: { "x-nxopen-api-key": API_KEY },
-      })
-    ]);
+    const headers = { "x-nxopen-api-key": API_KEY };
 
-    // 결과 파싱
-    const [
-      infoBody,
-      stat,
-      item,
-      hyperStat,
-      ability,
-      symbol,
-      skill,
-      hexaStat,
-      union,
-      artifact,
-      champion
-    ] = await Promise.all([
-      infoRes.json(),
-      statRes.json(),
-      itemRes.json(),
-      hyperRes.json(),
-      abilityRes.json(),
-      symbolRes.json(),
-      skillRes.json(),
-      hexaRes.json(),
-      unionRes.json(),
-      artifactRes.json(),
-      championRes.json()
-    ]);
+    // ocid로 각종 정보 병렬 요청 → fetch 함수로 배열화 (429도 자동 재시도)
+    const fetchFns = [
+      // 2. 캐릭터 기본 정보
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/basic?ocid=${ocid}`, headers),
+      // 3. 스탯 정보
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/stat?ocid=${ocid}`, headers),
+      // 4. 장비 정보
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/item-equipment?ocid=${ocid}`, headers),
+      // 5. 하이퍼 스탯
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/hyper-stat?ocid=${ocid}`, headers),
+      // 6. 어빌리티
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/ability?ocid=${ocid}`, headers),
+      // 7. 심볼
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/symbol-equipment?ocid=${ocid}`, headers),
+      // 8. 0차 스킬
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/skill?ocid=${ocid}&character_skill_grade=0`, headers),
+      // 9. 헥사 스텟
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/hexamatrix-stat?ocid=${ocid}`, headers),
+      // 10. 유니온 공격대
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/user/union-raider?ocid=${ocid}`, headers),
+      // 11. 유니온 아티팩트
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/user/union-artifact?ocid=${ocid}`, headers),
+      // 12. 유니온 챔피언
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/user/union-champion?ocid=${ocid}`, headers),
+    ];
 
-    // ★ 필요한 데이터만 합쳐서 반환
+    // 5개씩 1.2초 대기하며 순차 실행 (limit, delayMs 값은 상황에 따라 조정 가능)
+    const [
+      infoBody,   // 2. 캐릭터 기본 정보
+      stat,       // 3. 스탯 정보
+      item,       // 4. 장비 정보
+      hyperStat,  // 5. 하이퍼 스탯
+      ability,    // 6. 어빌리티
+      symbol,     // 7. 심볼 정보
+      skill,      // 8. 0차 스킬
+      hexaStat,   // 9. 헥사 스텟
+      union,      // 10. 유니온 공격대
+      artifact,   // 11. 유니온 아티팩트
+      champion    // 12. 유니온 챔피언
+    ] = await fetchWithLimit(fetchFns, 5, 1200);
+
+    // 결과 파싱 (원본과 동일)
+    const combatPowerObj = stat.final_stat ? stat.final_stat.find(s => s.stat_name === "전투력") : null;
+    const combatPower = combatPowerObj ? combatPowerObj.stat_value : null;
+
+    const powerSkillNames = ["정령의 축복", "여제의 축복", "파괴의 얄다바오트"];
+    // 펫 스킬 찾기
+    const filteredSkills = skill.character_skill
+      ? skill.character_skill.filter(
+          (s) =>
+            s.skill_name.includes("Lv") ||
+            powerSkillNames.includes(s.skill_name)
+        )
+      : [];
+
+    const presetNo = hyperStat.use_preset_no || "1";
+    const presetKey = `hyper_stat_preset_${presetNo}`;
+    const preset = hyperStat[presetKey] || [];
+
+    // 필요한 데이터만 합쳐서 반환
     res.status(200).json({
-      ...infoBody,
-      ...stat,
-      ...item,
-      hyperStat,
-      ability,
-      symbol,
-      skill,
-      hexaStat,
-      union,
-      artifact,
-      champion
+      character_name: infoBody.character_name,    // 캐릭터 이름
+      character_class: infoBody.character_class,  // 캐릭터 직업
+      character_level: infoBody.character_level,  // 캐릭터 레벨
+      character_image: infoBody.character_image,  // 캐릭터 이미지 URL
+      combat_power: combatPower,                  // 전투력
+      item: item.item_equipment,                  // 장비
+      title: item.title,                          // 칭호
+      hyperStat: preset,                          // 하이퍼 스탯
+      ability: ability.ability_info,              // 어빌리티
+      symbol: symbol.symbol,                      // 심볼 정보
+      skill: filteredSkills,                      // 0차 스킬
+      hexa_stat: {                                // 헥사 스텟
+        character_hexa_stat_core: hexaStat.character_hexa_stat_core,
+        character_hexa_stat_core_2: hexaStat.character_hexa_stat_core_2,
+        character_hexa_stat_core_3: hexaStat.character_hexa_stat_core_3
+      },
+      union: { 
+        union_raider: union.union_raider_stat,
+        union_occupied: union.union_occupied_stat
+      },
+      artifact: artifact.union_artifact_effect,
+      champion: champion.champion_badge_total_info
     });
 
   } catch (err) {
