@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
 import { useToast } from "../utils/toastContext.jsx";
 import { initcalPower } from "../utils/initcalPower.js";
+import { getCachedCharacter, setCachedCharacter } from "../utils/charCache.js";
 
 export default function SearchModal({ onClose, onSearch}) {
   const [inputValue, setInputValue] = useState("");
@@ -27,15 +28,29 @@ export default function SearchModal({ onClose, onSearch}) {
   
   // 캐릭터 검색 처리
   const handleSearch = async () => {
-    if (!inputValue.trim()) {
+    const name = inputValue.trim();
+    if (!name) {
       showToast("❌ 캐릭터 이름을 입력하세요.", "error");
       return;
     }
+
+    // 캐시 체크 - 30분 이내 재검색 시 api 호출 X
+    
+    const cached = getCachedCharacter(name);
+    if (cached) {
+      addRecent(name);
+      const success = await onSearch(cached);
+      if (success) onClose();
+      return;
+    }
+
+    // 캐시 존재 X 시 api 호출
     const result = await fetchCharacterByName(inputValue.trim());
     if (!result || result?.error) {
       showToast("❌ 캐릭터를 찾을 수 없습니다.", "error");
       return;
     }
+
     const basicPowerChar = {
       class: result.character_class,  // 캐릭터 직업
       level: result.character_level,  // 캐릭터 레벨
@@ -47,7 +62,8 @@ export default function SearchModal({ onClose, onSearch}) {
       hexa_stat: result.hexa_stat,    // 헥사스킬
       union: result.union,            // 유니온
       artifact: result.artifact,      // 아티팩트
-      champion: result.champion       // 유니온 챔피언
+      champion: result.champion,      // 유니온 챔피언
+      pet: result.pet                 // 펫 장비
     }
     const { baseStat, noPerStat } = initcalPower(basicPowerChar);
     const mappedChar = {
@@ -56,10 +72,12 @@ export default function SearchModal({ onClose, onSearch}) {
       level: result.character_level,  // 캐릭터 레벨
       image: result.character_image,  // 캐릭터 이미지 URL
       equipment: result.item,         // 장비
-      baseStat: baseStat,
-      noPerStat: noPerStat,
+      baseStat: baseStat,             // 기본 스탯
+      noPerStat: noPerStat,           // % 미적용 스탯
     };
-    console.log({ baseStat, noPerStat });
+
+    // 캐시에 저장
+    setCachedCharacter(name, mappedChar);
     addRecent(result.character_name);
     const success = await onSearch(mappedChar);
     if (success) {

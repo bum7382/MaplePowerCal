@@ -67,8 +67,6 @@ export default function OptionGroupEditor({ item, type, onChange }) {
   // 초기값 설정: item과 options가 준비되면 기존 옵션을 parsed로 파싱
   useEffect(() => {
     if (!item || options.length === 0 || initialized) return;
-  
-
     const newParsed = optionKeys.map((key) => {
       const raw = item[key];
       if (!raw || typeof raw !== "string") return { template: null, values: {} };
@@ -84,6 +82,17 @@ export default function OptionGroupEditor({ item, type, onChange }) {
   useEffect(() => {
     onChange && onChange({ grade, options: parsedOptions });
   }, [grade, parsedOptions]);
+
+  // 없음일 경우 초기화
+  useEffect(() => {
+    if (grade === "없음") {
+      setParsedOptions([
+        { template: null, values: {} },
+        { template: null, values: {} },
+        { template: null, values: {} },
+      ]);
+    }
+  }, [grade]);
 
   // 드롭다운에 보여줄 옵션 필터링 (등급/부위/잠재/에디셔널 조건에 따라)
   const filteredOptions = useMemo(() => {
@@ -140,7 +149,7 @@ export default function OptionGroupEditor({ item, type, onChange }) {
                 const selected = options.find((o) => o.id === Number(e.target.value));
                 const updated = [...parsedOptions];
                 updated[idx] = {
-                  template: selected,
+                  template: selected || null,
                   values: {},
                 };
                 setParsedOptions(updated);

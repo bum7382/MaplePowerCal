@@ -418,6 +418,22 @@ function unionPower(union) {
   }
 }
 
+// 10. 펫장비
+function petPower(pet){
+  if (pet) {
+    for (let i = 1; i <= 3; i++) {
+      const eq = pet[`pet_${i}_equipment`];
+      if (!eq || !eq.item_option) continue;
+      for (const opt of eq.item_option) {
+        if (opt.option_type === "공격력") {
+          baseStat.atk += Number(opt.option_value) || 0;
+        } else if (opt.option_type === "마력") {
+          baseStat.magic += Number(opt.option_value) || 0;
+        }
+      }
+    }
+  }
+}
 
 
 export function initcalPower(character){
@@ -430,6 +446,8 @@ export function initcalPower(character){
     hyperStatPower(character.hyperStat);
     skillPower(character.skill);
     symbolPower(character.symbol, character.class);
-    unionPower(character.union)
+    unionPower(character.union);
+    petPower(character.pet);
+    console.log(baseStat, noPerStat)
     return {baseStat, noPerStat};
 }

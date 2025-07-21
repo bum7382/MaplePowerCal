@@ -84,6 +84,8 @@ export default async function handler(req, res) {
       () => fetchWithRetry(`${API_URL}/maplestory/v1/user/union-artifact?ocid=${ocid}`, headers),
       // 12. 유니온 챔피언
       () => fetchWithRetry(`${API_URL}/maplestory/v1/user/union-champion?ocid=${ocid}`, headers),
+      // 13. 펫
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/pet-equipment?ocid=${ocid}`, headers),
     ];
 
     // 5개씩 1.2초 대기하며 순차 실행 (limit, delayMs 값은 상황에 따라 조정 가능)
@@ -98,7 +100,8 @@ export default async function handler(req, res) {
       hexaStat,   // 9. 헥사 스텟
       union,      // 10. 유니온 공격대
       artifact,   // 11. 유니온 아티팩트
-      champion    // 12. 유니온 챔피언
+      champion,   // 12. 유니온 챔피언
+      pet,        // 13. 펫
     ] = await fetchWithLimit(fetchFns, 5, 1200);
 
     // 결과 파싱 (원본과 동일)
@@ -115,6 +118,7 @@ export default async function handler(req, res) {
         )
       : [];
 
+    // 하이퍼 스탯 프리셋 1만 추출
     const presetNo = hyperStat.use_preset_no || "1";
     const presetKey = `hyper_stat_preset_${presetNo}`;
     const preset = hyperStat[presetKey] || [];
@@ -137,12 +141,17 @@ export default async function handler(req, res) {
         character_hexa_stat_core_2: hexaStat.character_hexa_stat_core_2,
         character_hexa_stat_core_3: hexaStat.character_hexa_stat_core_3
       },
-      union: { 
+      union: {                                    // 유니온
         union_raider: union.union_raider_stat,
         union_occupied: union.union_occupied_stat
       },
-      artifact: artifact.union_artifact_effect,
-      champion: champion.champion_badge_total_info
+      artifact: artifact.union_artifact_effect,   // 아티팩트
+      champion: champion.champion_badge_total_info, // 유니온 챔피언
+      pet:{                                       // 펫
+        pet_1_equipment: pet.pet_1_equipment,
+        pet_2_equipment: pet.pet_2_equipment,
+        pet_3_equipment: pet.pet_3_equipment
+      }
     });
 
   } catch (err) {

@@ -1,0 +1,15 @@
+{
+  "str": "str",
+  "dex": "dex",
+  "int": "int",
+  "luk": "luk",
+  "hp": "max_hp",
+  "mp": "max_mp",
+  "attack": "attack_power",
+  "magicAttack": "magic_power",
+  "defense": "armor",
+  "speed": "speed",
+  "jump": "jump",
+  "bossRate": "boss_damage",
+  "ignoreDefense": "ignore_monster_armor"
+}

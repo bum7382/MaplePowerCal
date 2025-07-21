@@ -32,6 +32,7 @@ const commonStats = [
   "armor", "attack_power", "magic_power",
   "all_stat"
 ];
+
 // 무기 전용 옵션
 const weaponOnly = ["boss_damage", "ignore_monster_armor"];
 // 방어구 전용 옵션
@@ -50,8 +51,7 @@ export default function EquipmentInfo({
   setSlotColors,
   setPowerDiff,
   setEquipment,
-  equipment,
-  baseStats,
+  equipment
 }) {
   
   const [price, setPrice] = useState(item.price?.toString() || "0");  // 가격
@@ -69,7 +69,7 @@ export default function EquipmentInfo({
   const isSeedRing = item.special_ring_level && item.special_ring_level !== 0;  // 시드링 여부
   const cannotHavePotential = noPotentialSlots.includes(item.item_equipment_slot) || isSeedRing;  // 잠재옵션 불가
   
-  // 소울 옵션 초기화
+  // 소울 옵션 초깃값 설정
   const soulOptions = useSoulOptions();
   const [soulTemplate, setSoulTemplate] = useState(() => {
     const match = soulOptions.find(opt => item.soul_option?.startsWith(opt.label));
@@ -100,6 +100,7 @@ export default function EquipmentInfo({
 
   }, [item, soulOptions]);
 
+  // 로드되었을 때 실행
   useEffect(() => {
     if (!item || !originalEquipment || !character) return;
 
@@ -391,12 +392,12 @@ export default function EquipmentInfo({
     const newPower = calculatePower(
       Object.values(updatedEquipments),
       character.class,
-      character.weapon_is_genesis,
-      baseStats,
+      character.baseStat,
+      character.noPerStat,
       character.level
     );
-
     const scaledDiff = newPower - originalPower;
+    console.log(`scaledDiff: ${scaledDiff}`)
     setPowerDiff(scaledDiff);
 
     onSave?.(updated, scaledDiff);
@@ -416,16 +417,16 @@ export default function EquipmentInfo({
   const currentPower = calculatePower(
     Object.values(currentEquipMap),
     character.class,
-    character.weapon_is_genesis,
-    baseStats,
+    character.baseStat,
+    character.noPerStat,
     character.level
   );
 
   const originalPowerForSlot = calculatePower(
     Object.values(originalEquipMap),
     character.class,
-    character.weapon_is_genesis,
-    baseStats,
+    character.baseStat,
+    character.noPerStat,
     character.level
   );
 

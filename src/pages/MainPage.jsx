@@ -1,12 +1,13 @@
 // src/pages/MainPage.jsx
 import React, {useEffect, useState} from "react";
 import EquipmentInfo from "../components/EquipmentInfo.jsx";
-import { calculatePower } from "@/utils/calculatePower";
-import BasicStatModal from "@/components/BasicStatModal";
-import jobStat from "@/data/jobStat.json";
+import { calculatePower } from "../utils/calculatePower";
+import BasicStatModal from "../components/BasicStatModal";
+import jobStat from "../data/jobStat.json";
 import InventoryPanel from "../components/InventoryPanel.jsx";
+import EquipmentSearch from "../components/EquipmentSearch.jsx";
 import { useNavigate } from "react-router-dom";
-import { isItemChanged } from "@/utils/equipmentUtils";
+import { isItemChanged } from "../utils/equipmentUtils";
 import { useToast } from "../utils/toastContext";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,16 +25,26 @@ export default function MainPage() {
   const [originalEquipment, setOriginalEquipment] = useState({}); // 원본 장비 정보
   const [equipmentLoaded, setEquipmentLoaded] = useState(false);  // 장비 데이터 로딩 상태
   const [showInfo, setShowInfo] = useState(false);  // 장비 정보 표시 여부
-  const [isGenesis, setIsGenesis] = useState(null); // 제네시스 무기 여부
+  const [showSearch, setShowSearch] = useState(false);  // 장비 찾기 모달 여부
 
   // 전투력
-  const [showModal, setShowModal] = useState(false);  // 기본 능력치 입력창
-  const [baseStats, setBaseStats] = useState(null); // 입력된 기본 능력치
   const [powerDiff, setPowerDiff] = useState(0);  // 전투력
   const [originalPower, setOriginalPower] = useState(0);  // 원본 전투력
+  const [initDone, setInitDone] = useState(false);
   
   // 인벤토리
-  const [inventory, setInventory] = useState([]); // 인벤토리
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem("inventory");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("인벤토리 파싱 실패:", e);
+        return [];
+      }
+    }
+    return [];
+  });
   const [showInventory, setShowInventory] = useState(false);  // 인벤토리 표시 여부
   const [hoveredInventoryItem, setHoveredInventoryItem] = useState(null); // 인벤토리 아이템 호버 상태
   const navigate = useNavigate();
@@ -57,32 +68,8 @@ export default function MainPage() {
     }
     setLoading(false);
   }, []);
-  
-  // 기본 능력치 불러오기
-  useEffect(() => {
-    if (!character?.name) return;
-    const savedRaw = localStorage.getItem("stat");
-    if (!savedRaw) return;  // 값 없으면 종료
-    let saved;
-    try {
-      saved = JSON.parse(savedRaw);
-    } catch (e) {
-      return;
-    }
-    const stored = saved[character.name];
-    if (stored) {
-      setBaseStats(stored);
-    }
-  }, [character?.name]);
 
-  useEffect(() => {
-    if (!character?.stat) return;
-    const originPowerObj = character.stat.find(s => s.stat_name === "전투력");
-    const originPower = originPowerObj ? Number(originPowerObj.stat_value.replace(/,/g, "")) : 0;
-    setOriginalPower(originPower);
-  }, [character?.stat]);
-
-
+  // 장비 로드
   useEffect(() => {
     if (!character?.equipment) return;
 
@@ -103,47 +90,32 @@ export default function MainPage() {
       equipmentMap[raw] = item;
     }
 
-    // 제네시스 여부 판단
-    const weapon = character.equipment.find(item => item.item_equipment_slot === "무기");
-    const weaponIsGenesis = weapon?.item_name?.includes("제네시스") || false;
-    setIsGenesis(weaponIsGenesis);
-
     setOriginalEquipment(equipmentMap);
     setEquipment(equipmentMap);
     setEquipmentLoaded(true);
+  }, [character]);
 
-  }, [character?.equipment]);
 
-
+  // 인벤토리 로컬 스토리지에 저장
   useEffect(() => {
-    const saved = localStorage.getItem("inventory");
-    if (saved) {
-      try {
-        setInventory(JSON.parse(saved));
-      } catch (e) {
-        setInventory([]);
-      }
-    } else {
-      setInventory([]);
-    }
-  }, []);
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+  }, [inventory]);
 
+  // 기초 전투력 계산 활성화
+  useEffect(() => {
+    setInitDone(false);
+  }, [character?.name]);
 
-  // 기본 능력치 입력되었을 시 계산
-  const handleSaveBaseStats = (newBaseStats) => {
-    setBaseStats(newBaseStats);
-    setShowModal(false);
-
-    const basePower = calculatePower(
-      Object.values(equipment),
-      character.class,
-      isGenesis,
-      newBaseStats
-    );
-    console.log("🔍 계산한 전투력:", basePower);
+  // 기본 전투력 계산
+  useEffect(() => {
+    if (initDone) return;
+    if (!character || Object.keys(equipment).length === 0) return;
+    const basePower = calculatePower(Object.values(equipment), character.class, character.baseStat, character.noPerStat, character.level);
     setOriginalPower(basePower);
-  };
+    setInitDone(true);
+  }, [character, equipment, initDone]);
 
+  // 장비 슬롯 클릭 시
   const handleSlotClick = (slotName) => {
     setSelectedSlot(slotName);
     setHoveredSlot(slotName);
@@ -155,7 +127,7 @@ export default function MainPage() {
     }
   };
 
-
+  // 전투력 표시 포맷
   function formatKoreanNumber(num) {
     const abs = Math.abs(num);
     const eok = Math.floor(abs / 100000000);
@@ -209,11 +181,12 @@ export default function MainPage() {
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[454px] left-[14px] w-[172px] h-[22px]" />
         <div className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center"
           onClick={() => setShowModal(true)}>
+            {/* 캐릭터 이미지 & 이름 */}
           <img src={character?.image || "/images/default_character.png"} draggable="false" className="w-[130px]" />
           <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-morris relative -top-[5px]">
             {character?.name || "이름없음"}
           </span>
-        </div>ㄴ
+        </div>
         <button
           className="absolute top-[380px] left-[170px] px-4 py-2 bg-[#44B7CF] text-white text-sm font-morris rounded hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50"
           onClick={() => navigate("/")}
@@ -255,15 +228,62 @@ export default function MainPage() {
               />
             )}
 
-            {/* 클릭 가능한 버튼 */}
+            {/* X 버튼 (장착 해제) */}
+            {selectedSlot === name && equipment[name] && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEquipment((prev) => {
+                    const updated = { ...prev };
+                    delete updated[name];
+                    return updated;
+                  });
+                  setSlotColors((prev) => ({
+                    ...prev,
+                    [name]: "transparent"
+                  }));
+                  setPowerDiff(calculatePower(
+                    Object.values({ ...equipment, [name]: undefined }).filter(Boolean),
+                    character.class,
+                    character.baseStat,
+                    character.noPerStat,
+                    character.level
+                  ) - originalPower);
+                  setShowInfo(false);
+                  setInfoLocked(false);
+                }}
+                className="absolute top-0 right-0 bg-red-500 text-center text-white w-[16px] h-[16px] text-[10px] leading-[16px] rounded-full z-30 hover:bg-red-600"
+                title="장착 해제"
+              >
+                ✕
+              </button>
+            )}
+
+
+            {/* 슬롯 */}
             <button
               className={`${slotStyle} z-20`}
               style={{ backgroundColor: "transparent" }}
-              onClick={() => handleSlotClick(name)}
+              onClick={() => {
+                // 단일 클릭: 슬롯만 선택
+                setSelectedSlot(name);
+                setHoveredSlot(name);
+                setInfoLocked(false);
+              }}
+              onDoubleClick={() => {
+              // 더블 클릭: 수정창 열기
+              setSelectedSlot(name);
+              setHoveredSlot(name);
+              const hasItem = !!equipment[name];
+              setInfoLocked(true);
+              setShowInfo(hasItem);
+              setShowSearch(!hasItem);
+            }}
+              
             />
           </div>
         ))}
-        {selectedSlot && equipment[selectedSlot] && (
+        {selectedSlot && (
           <div className="absolute bottom-2 right-2 flex gap-2">
             {/* 초기화 버튼 */}
             <button
@@ -281,13 +301,13 @@ export default function MainPage() {
                   ...prev,
                   [selectedSlot]: "transparent"
                 }));
-
+                
                 // 전투력 재계산
                 const newPower = calculatePower(
                   Object.values({ ...equipment, [selectedSlot]: originalEquipment[selectedSlot] }),
                   character.class,
-                  isGenesis,
-                  baseStats,
+                  character.baseStat,
+                  character.noPerStat,
                   character.level
                 );
                 setPowerDiff(newPower - originalPower);
@@ -301,7 +321,7 @@ export default function MainPage() {
             </button>
 
             {/* 인벤토리 저장 버튼 */}
-            <button
+            {equipment[selectedSlot] && (<button
               onClick={async () => {
                 const item = equipment[selectedSlot];
 
@@ -320,6 +340,7 @@ export default function MainPage() {
             >
               인벤토리에 저장
             </button>
+            )}
           </div>
         )}
 
@@ -335,7 +356,9 @@ export default function MainPage() {
               items={inventory}
               onSlotClick={(item, index) => {
                 if (!selectedSlot) return;
-                  if (item.item_equipment_slot !== selectedSlot) {
+                  const slotBaseName = selectedSlot.replace(/[0-9]/g, "");
+                  const itemSlotBaseName = item.item_equipment_slot.replace(/[0-9]/g, "");
+                  if (slotBaseName !== itemSlotBaseName) {
                     showToast("선택한 슬롯에 장착할 수 없는 아이템입니다.", "error");
                     return;
                   }
@@ -349,8 +372,8 @@ export default function MainPage() {
                 const newPower = calculatePower(
                   Object.values({ ...equipment, [selectedSlot]: item }),
                   character.class,
-                  character.weapon_is_genesis,
-                  baseStats,
+                  character.baseStat,
+                  character.noPerStat,
                   character.level
                 );
                 setPowerDiff(newPower - originalPower);
@@ -379,10 +402,9 @@ export default function MainPage() {
 
       {showInfo && hoveredSlot && equipment[hoveredSlot] && (
         <EquipmentInfo
-          key={`${hoveredSlot}-${equipment[hoveredSlot]?.item_name}`}
           item={equipment[hoveredSlot]}
-          slot={hoveredSlot}
           editable={isInfoLocked}
+          slot={hoveredSlot}
           onClose={() => {
             setShowInfo(false);
             setInfoLocked(false);
@@ -395,44 +417,55 @@ export default function MainPage() {
             setInfoLocked(false);
           }}
           originalEquipment={originalEquipment}
-          setOriginalEquipment={setOriginalEquipment}
           currentEquipment={equipment}
-          equippedItems={Object.values(equipment)}
           character={character}
           originalPower={originalPower}
-          inventory={inventory}
-          setInventory={setInventory}
-          slotColors={slotColors}
           setSlotColors={setSlotColors}
           setPowerDiff={setPowerDiff}
           setEquipment={setEquipment}
           equipment={equipment}
-          baseStats={baseStats}
         />
       )}
       
       {hoveredInventoryItem && !isInfoLocked && (
       <EquipmentInfo
-        key={`inv-${hoveredInventoryItem.uuid || hoveredInventoryItem.item_name}`}
         item={hoveredInventoryItem}
-        slot={hoveredInventoryItem.item_equipment_slot}
         editable={false}
+        slot={hoveredInventoryItem.item_equipment_slot}
         onClose={() => setHoveredInventoryItem(null)}
         originalEquipment={originalEquipment} // 원본 장비 정보 전달
-        currentEquipment={equipment} // 현재 장비 상태
-        equippedItems={Object.values(equipment)}
+        currentEquipment={{ // 현재 장비 상태
+          ...equipment,
+          [selectedSlot]: hoveredInventoryItem
+        }} 
         character={character}
         originalPower={originalPower}
-        inventory={inventory}
-        setInventory={setInventory}
-        slotColors={{}}
         setSlotColors={() => {}}
         setPowerDiff={setPowerDiff}
         setEquipment={setEquipment}
         equipment={equipment}
-        baseStats={baseStats}
       />
     )}
+
+    {showSearch && selectedSlot && !equipment[selectedSlot] && (
+      <div className="absolute top-[170px] left-[150px] z-30">
+        {/* 모달 닫기 X 버튼 */}
+        <button
+          className="absolute top-2 right-2 text-gray-600 hover:text-black"
+          onClick={() => setShowSearch(false)}
+        >
+          ✕
+        </button>
+
+        {/* 장비 검색 컴포넌트 */}
+        <EquipmentSearch
+          slot={selectedSlot}
+          onClose={() => setShowSearch(false)}
+        />
+      </div>
+    )}
+
+
     </div>
   );
 }
