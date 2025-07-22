@@ -111,7 +111,7 @@ export default function OptionGroupEditor({ item, type, onChange }) {
   }, [options, grade, type, item.item_equipment_slot, parsedOptions]);
   // 입력값 정리 함수 (숫자만 허용, 앞자리 0 제거, 2자리 제한)
   const sanitizeInput = (value) =>
-    value.replace(/[^\d]/g, "").replace(/^0+(?!$)/, "").slice(0, 2);
+    value.replace(/[^\d]/g, "").replace(/^0+(?!$)/, "").slice(0, 3);
 
   if (cannotHavePotential) {
     return (

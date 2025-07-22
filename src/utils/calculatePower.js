@@ -69,15 +69,18 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
 
     // 데미지 계산
     baseStat.damage += +(base.damage || 0) + +(add.damage || 0)
-
     // 소울 옵션이 있을 경우 계산
     if (eq.soul_option) {
-      const match = soulOptions.find(opt => eq.soul_option?.startsWith(opt.label));
+      const match = soulOptions.find(opt => {
+        if (!opt.template) return false;
+        const regex = buildTemplateRegex(opt.template);
+        return regex.test(eq.soul_option);
+      });
       if (match) {
         const valMatch = eq.soul_option.match(/([0-9]+)/);
         const val = valMatch ? +valMatch[1] : 0;
         const id = match.id;
-
+        
         if (match.type === "percent") {
           if (id == 4) baseStat.boss_damage += val;
           else if (id == 2) perStat.atk += val;
@@ -164,7 +167,11 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     });
   }
 
-  for (const [setName, count] of Object.entries(setCountMap)) {
+  for (let [setName, count] of Object.entries(setCountMap)) {
+    // 제네시스 무기 - 럭키 아이템 효과
+    if(setName == "루타비스 세트" || setName == "앱솔랩스 세트" || setName == "아케인셰이드 세트"){
+      if(count >= 3 && currentIsGenesis) count++;
+    }
     const bonus = setEffect[setName].bonuses;
     for (let i = 1; i <= count; i++) {
       const entry = bonus?.[String(i)];
@@ -187,7 +194,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
   // 주스탯, 부스탯
   const main = jobInfo.main_stat;
   const sub = jobInfo.sub_stat;
-
+  
   const mainStat = baseStat[main] * ((100 + perStat[main]) / 100) + noPerStat[main];
   const subStat = baseStat[sub] * ((100 + perStat[sub]) / 100) + noPerStat[sub]
   const finalStat = Math.floor((mainStat * 4 + subStat) / 100);
@@ -198,18 +205,21 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
   const finalCrit = (135 + baseStat.crit_damage) / 100;
   const power = Math.floor(finalStat * finalAtk * finalDmg * finalCrit * finalDamage);
   
-  
+  /*
   console.log("전투력 계산:", {
+    initialStat,
     baseStat,
     noPerStat,
     perStat,
     mainStat,
-    subStat, 
+    subStat,
     finalStat,
     finalAtk,
     finalDmg,
     finalCrit,
     power
-  });
+  });*/
+  
+  
   return isNaN(power) ? 0 : power;
 }

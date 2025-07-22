@@ -95,7 +95,6 @@ export default function MainPage() {
     setEquipmentLoaded(true);
   }, [character]);
 
-
   // 인벤토리 로컬 스토리지에 저장
   useEffect(() => {
     localStorage.setItem("inventory", JSON.stringify(inventory));
@@ -448,7 +447,7 @@ export default function MainPage() {
     )}
 
     {showSearch && selectedSlot && !equipment[selectedSlot] && (
-      <div className="absolute top-[170px] left-[150px] z-30">
+      <div className="absolute top-[217px] right-[300px] z-30">
         {/* 모달 닫기 X 버튼 */}
         <button
           className="absolute top-2 right-2 text-gray-600 hover:text-black"
@@ -460,7 +459,34 @@ export default function MainPage() {
         {/* 장비 검색 컴포넌트 */}
         <EquipmentSearch
           slot={selectedSlot}
-          onClose={() => setShowSearch(false)}
+          onSelectItem={(item) => {
+            setEquipment((prev) => ({
+              ...prev,
+              [selectedSlot]: {
+                ...item,
+                item_equipment_slot: selectedSlot,
+              },
+            }));
+            setSlotColors((prev) => ({
+              ...prev,
+              [selectedSlot]: "#44B7CF",
+            }));
+            setShowSearch(false);
+            setShowInfo(false);
+            setInfoLocked(false);
+
+            // 전투력 갱신
+            const newPower = calculatePower(
+              Object.values({ ...equipment, [selectedSlot]: { ...item, item_equipment_slot: selectedSlot } }),
+              character.class,
+              character.baseStat,
+              character.noPerStat,
+              character.level
+            );
+            console.log("[DEBUG] 선택한 장비의 전투력 차이:", powerDiff);
+            console.log("기존 전투력", originalPower);
+            setPowerDiff(newPower - originalPower);
+          }}
         />
       </div>
     )}

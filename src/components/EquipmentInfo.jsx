@@ -72,7 +72,13 @@ export default function EquipmentInfo({
   // 소울 옵션 초깃값 설정
   const soulOptions = useSoulOptions();
   const [soulTemplate, setSoulTemplate] = useState(() => {
-    const match = soulOptions.find(opt => item.soul_option?.startsWith(opt.label));
+    const valueMatch = item.soul_option?.match(/([0-9]+)/);
+    const value = valueMatch ? valueMatch[1] : "";
+    // 소울 템플릿 리스트 중에, 값만 치환해서 완성 문자열과 일치하는 애 찾기
+    const match = soulOptions.find(opt => {
+      if (!opt.template) return false;
+      return opt.template.replace("{value}", value) === item.soul_option;
+    });
     return match || null;
   });
   const [soulValue, setSoulValue] = useState(() => {
@@ -92,11 +98,14 @@ export default function EquipmentInfo({
     setEtcOptions({ ...item.item_etc_option });  // 주문서작
 
     // 소울
-    const match = soulOptions.find(opt => item.soul_option?.startsWith(opt.label));
     const valueMatch = item.soul_option?.match(/([0-9]+)/);
-
+    const value = valueMatch ? valueMatch[1] : "";
+    const match = soulOptions.find(opt => {
+      if (!opt.template) return false;
+      return opt.template.replace("{value}", value) === item.soul_option;
+    });
     setSoulTemplate(match || null);
-    setSoulValue(valueMatch ? valueMatch[1].replace(/^0+(?!$)/, "") : "");
+    setSoulValue(value);
 
   }, [item, soulOptions]);
 
@@ -454,7 +463,7 @@ export default function EquipmentInfo({
       <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
 
       <div className="mb-2 text-center">
-        {Number(starforce) > 0 && !["칭호", "뱃지", "엠블렘", "보조무기"].includes(item.item_equipment_slot) && !isSeedRing &&
+        {!["칭호", "뱃지", "엠블렘", "보조무기"].includes(item.item_equipment_slot) && !isSeedRing &&
          renderStarforceGrid(starforce, +item.item_base_option.base_equipment_level)}
         <p className="text-lg">{item.item_name}</p>
       </div>
@@ -468,7 +477,7 @@ export default function EquipmentInfo({
           <p className="mt-2 text-[#85919F] text-[15px]">전투력 증가량</p>
           <p
             className={`mt-3 text-[27px] font-kohi whitespace-nowrap ${
-              diff >= 0 ? "text-white" : "text-[#F20068]"
+              !hasChanged ? "text-white" : diff >= 0 ? "text-white" : "text-[#F20068]"
             }`}
           >
             {!hasChanged

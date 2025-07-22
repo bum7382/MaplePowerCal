@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import slotMap from "../data/itemTypeToSlot.json";
 import statMap from "../data/statMap.json";
 
-export default function EquipmentSearch({ slot, onClose }) {
+export default function EquipmentSearch({ slot, onSelectItem }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
 
@@ -26,19 +26,131 @@ export default function EquipmentSearch({ slot, onClose }) {
     return () => clearTimeout(delayDebounce);
   }, [query]);
 
+  function getBaseSlotName(slotName) {
+    // "반지1" → "반지", "펜던트2" → "펜던트"
+    return slotName.replace(/[0-9]/g, "");
+  }
+
   // 2. 변환 함수
   function convertToNexonFormat(apiData) {
-    const nexonBaseOption = {};
-    // statMap: { 우리Key: 넥슨APIKey }
-    Object.entries(statMap).forEach(([myKey, nexonKey]) => {
-        if (apiData.stats && apiData.stats[myKey] !== undefined) {
-        nexonBaseOption[nexonKey] = String(apiData.stats[myKey]);
-        }
+    const nexonBaseOption = {}
+
+    // 기본값 0으로 채우기
+    Object.values(statMap).forEach(nexonKey => {
+      nexonBaseOption[nexonKey] = "0";
     });
-    return {
-        ...apiData,
-        item_base_option: nexonBaseOption, // 넥슨 형식으로 추가
+
+    // 받아온 값으로 교체
+    Object.entries(statMap).forEach(([myKey, nexonKey]) => {
+      if (apiData.stats && apiData.stats[myKey] !== undefined) {
+        nexonBaseOption[nexonKey] = String(apiData.stats[myKey]);
+      }
+    });
+
+    const finalOption = {
+      additional_potential_option_1: null,
+      additional_potential_option_2: null,
+      additional_potential_option_3: null,
+      additional_potential_option_flag: "false",
+      additional_potential_option_grade: null,
+      cuttable_count: "10",
+      date_expire: null,
+      equipment_level_increase: 0,
+      freestyle_flag: "0",
+      golden_hammer_flag: "미적용",
+      growth_exp: 0,
+      growth_level: 0,
+      item_add_option: {
+        all_stat: "0",
+        armor: "0",
+        attack_power: "0",
+        boss_damage: "0",
+        damage: "0",
+        dex: "0",
+        equipment_level_decrease: 0,
+        int: "0",
+        jump: "0",
+        luk: "0",
+        magic_power: "0",
+        max_hp: "0",
+        max_mp: "0",
+        speed: "0",
+        str: "0"
+      },
+      item_base_option: {
+        ...nexonBaseOption,
+        base_equipment_level: apiData.requiredStats.level,
+        max_hp_rate: "0",
+        max_mp_rate: "0"
+      },
+      item_description: apiData.io_desc,
+      item_equipment_part: getBaseSlotName(slot),
+      item_equipment_slot: slot,
+      item_etc_option: {
+        armor: "0",
+        attack_power: "0",
+        dex: "0",
+        int: "0",
+        jump: "0",
+        luk: "0",
+        magic_power: "0",
+        max_hp: "0",
+        max_mp: "0",
+        speed: "0",
+        str: "0"
+      },
+      item_exceptional_option: {
+        attack_power: "0",
+        dex: "0",
+        exceptional_upgrade: "0",
+        int: "0",
+        luk: "0",
+        magic_power: "0",
+        max_hp: "0",
+        max_mp: "0",
+        str: "0" 
+      },
+      item_gender: null,
+      item_icon: `https://api.maplestory.net/item/${apiData.itemId}/icon`,
+      item_name: apiData.io_name,
+      item_shape_icon: `https://api.maplestory.net/item/${apiData.itemId}/icon`,
+      item_shape_name: apiData.io_name,
+      item_starforce_option: {
+        armor: "0",
+        attack_power: "0",
+        dex: "0",
+        int: "0",
+        jump: "0",
+        luk: "0",
+        magic_power: "0",
+        max_hp: "0",
+        max_mp: "0",
+        speed: "0",
+        str: "0"
+      },
+      item_total_option: {
+        ...nexonBaseOption,
+        damage: 0,
+        equipment_level_decrease: 0,
+        max_hp_rate: "0",
+        max_mp_rate: "0"
+      },
+      potential_option_1: null,
+      potential_option_2: null,
+      potential_option_3: null,
+      potential_option_flag: "false",
+      potential_option_grade: null,
+      scroll_resilience_count: "0",
+      scroll_upgrade: "0",
+      scroll_upgradeable_count: "0",
+      soul_name: null,
+      soul_option: null,
+      special_ring_level: 0,
+      starforce: "0",
+      starforce_scroll_flag: "미사용"
     };
+    
+    return finalOption;
   }
 
   function getSlotFromItem(item) {
@@ -50,25 +162,33 @@ export default function EquipmentSearch({ slot, onClose }) {
     return slotMap[sub] || null;
   }
 
+  const baseSlot = getBaseSlotName(slot);
+
   const filteredResults = results.filter((item) => {
-    const itemSlot = getSlotFromItem(item);
-    return itemSlot === slot;
+    const itemSlot = getSlotFromItem(item); // "반지", "펜던트", ...
+    return itemSlot === baseSlot;
   });
 
   function handleItemSelect(itemId) {
-    fetch(`https://api.maplestory.net/item/${itemId}`)
-      .then((res) => res.json())
-      .then((data) => {
-      // 외부 API 구조 → 넥슨 구조로 변환
-      const nexonData = convertToNexonFormat(data);
-      // 여기서 onSelectItem(nexonData) 호출 (props에서 받아야 함!)
-      if (typeof onSelectItem === "function") {
-        onSelectItem(nexonData);
-      }
-    })
-    .catch((err) => {
-      console.error("아이템 상세 조회 실패:", err);
-    });
+    Promise.all([
+      fetch(`https://maplestory.io/api/KMS/389/item/${itemId}`).then(res => res.json()),
+      fetch(`https://api.maplestory.net/item/${itemId}`).then(res => res.json())
+    ])
+      .then(([ioData, netData]) => {
+        const mergedData = {
+          ...netData,
+          io_desc: ioData.description?.description || "",
+          io_name: ioData.description?.name || "",
+        };
+        const finalItem = convertToNexonFormat(mergedData);
+        console.log(finalItem);
+        if (typeof onSelectItem === "function") {
+          onSelectItem(finalItem);
+        }
+      })
+      .catch((err) => {
+        console.error("아이템 상세 조회 실패:", err);
+      });
   }
 
 
@@ -76,7 +196,6 @@ export default function EquipmentSearch({ slot, onClose }) {
     <div className="w-[320px] bg-[#1F2735] text-white rounded shadow-lg p-4 font-morris">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg">{slot} 장비 검색</h2>
-        <button onClick={onClose} className="text-gray-300 hover:text-white text-xl">×</button>
       </div>
 
       <input

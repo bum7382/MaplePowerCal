@@ -6,7 +6,7 @@ import { useToast } from "../utils/toastContext.jsx";
 import { initcalPower } from "../utils/initcalPower.js";
 import { getCachedCharacter, setCachedCharacter } from "../utils/charCache.js";
 
-export default function SearchModal({ onClose, onSearch}) {
+export default function SearchModal({ onClose, onSearchStart, onSearchSuccess }) {
   const [inputValue, setInputValue] = useState("");
   const [recent, setRecent] = useState([]);
   const { showToast } = useToast();
@@ -33,14 +33,13 @@ export default function SearchModal({ onClose, onSearch}) {
       showToast("❌ 캐릭터 이름을 입력하세요.", "error");
       return;
     }
+    if (onSearchStart) onSearchStart(); // 로딩화면
 
     // 캐시 체크 - 30분 이내 재검색 시 api 호출 X
-    
     const cached = getCachedCharacter(name);
     if (cached) {
       addRecent(name);
-      const success = await onSearch(cached);
-      if (success) onClose();
+      if (onSearchSuccess) onSearchSuccess(cached);
       return;
     }
 
@@ -79,10 +78,7 @@ export default function SearchModal({ onClose, onSearch}) {
     // 캐시에 저장
     setCachedCharacter(name, mappedChar);
     addRecent(result.character_name);
-    const success = await onSearch(mappedChar);
-    if (success) {
-      onClose();
-    }
+    if (onSearchSuccess) onSearchSuccess(mappedChar);
   };
 
   // 최근 검색 닉네임 클릭 시 input에 넣고 바로 검색할 수도 있음

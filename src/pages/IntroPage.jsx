@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from "react";
 import SearchModal from "../components/SearchModal";
 import { useNavigate } from "react-router-dom";
+import Loading from "../components/Loading";
 
 export default function IntroPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // 마운트 시 localStorage에서 즐겨찾기 불러오기
@@ -22,12 +24,16 @@ export default function IntroPage() {
     localStorage.setItem("favorites", JSON.stringify(filtered));
   };
 
-  // 캐릭터 검색 성공 시(검색 성공 후 바로 MainPage로 이동)
-  const handleSearch = (character) => {
-    // 캐릭터 정보 localStorage에 저장
-    localStorage.setItem("selectedCharacter", JSON.stringify(character));
+  // 검색 시작 시 모달 닫고 로딩
+  const handleSearchStart = () => {
     setShowSearch(false);
-    // MainPage로 이동
+    setLoading(true);
+  };
+
+  // API 완료 시 데이터 저장하고 페이지 이동
+  const handleSearchSuccess = (character) => {
+    localStorage.setItem("selectedCharacter", JSON.stringify(character));
+    setLoading(false);
     navigate("/main");
   };
 
@@ -112,9 +118,12 @@ export default function IntroPage() {
       {showSearch && (
         <SearchModal
           onClose={() => setShowSearch(false)}
-          onSearch={handleSearch}
+          onSearchStart={handleSearchStart}
+          onSearchSuccess={handleSearchSuccess}
         />
       )}
+
+      {loading && <Loading visible={true} />}
     </div>
   );
 }
