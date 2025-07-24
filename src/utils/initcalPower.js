@@ -448,6 +448,5 @@ export function initcalPower(character){
     symbolPower(character.symbol, character.class);
     unionPower(character.union);
     petPower(character.pet);
-    console.log(baseStat, noPerStat)
     return {baseStat, noPerStat};
 }

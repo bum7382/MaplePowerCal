@@ -10,7 +10,10 @@ import { useNavigate } from "react-router-dom";
 import { isItemChanged } from "../utils/equipmentUtils";
 import { useToast } from "../utils/toastContext";
 import Tutorial from "../components/Tutorial.jsx";
+import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
+import Loading from "../components/Loading";
 import { v4 as uuidv4 } from 'uuid';
+import { getCachedCharacter, setCachedCharacter } from "../utils/charCache";
 
 export default function MainPage() {
   const [loading, setLoading] = useState(true); // 로딩 상태
@@ -51,6 +54,7 @@ export default function MainPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
+  const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
 
 
   useEffect(() => {
@@ -141,10 +145,13 @@ export default function MainPage() {
     }
   };
 
-  const [isFavorite, setIsFavorite] = useState( // 즐겨찾기 여부
-    () => JSON.parse(localStorage.getItem("favorites") || "[]").includes(character?.name)
-  );
-  
+
+  useEffect(() => {
+    if (!character) return;
+    const favs = JSON.parse(localStorage.getItem("favorites") || "[]");
+    setIsFavorite(favs.includes(character.name));
+  }, [character]);
+    
   const handleFavoriteClick = () => {
     const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     let newFavorites;
@@ -161,7 +168,27 @@ export default function MainPage() {
     }
     localStorage.setItem("favorites", JSON.stringify(newFavorites));
   };
-
+  
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const result = await fetchCharacterByName(character.name);
+      if (!result) {
+        // 실패 시 처리(토스트 등)
+        setLoading(false);
+        showToast("정보 갱신에 실패했습니다.", "error");
+        return;
+      }
+      setCachedCharacter(character.name, result); // 캐시도 새로 저장
+      // 상태도 새로 저장(예시)
+      // setCharacter(result); 등
+      setLoading(false);
+      showToast("정보가 갱신되었습니다.", "success")
+    } catch (e) {
+      setLoading(false);
+      showToast("정보 갱신에 실패했습니다.", "error");
+    }
+  };
   // 전투력 표시 포맷
   function formatKoreanNumber(num) {
     const abs = Math.abs(num);
@@ -188,7 +215,6 @@ export default function MainPage() {
     { name: "엠블렘", top: 320, left: 239 },
   ];
 
-  if (loading) return <div className="text-center mt-20">⏳ 로딩 중...</div>;
   if (!character) return <div className="text-center mt-20">❌ 선택된 캐릭터가 없습니다.</div>;
 
   return (
@@ -203,6 +229,14 @@ export default function MainPage() {
                draggable="false" 
                title="튜토리얼" 
                className="absolute top-[25px] right-[7px] w-[30px] active:brightness-75 hover:brightness-125 transition">
+          </img>
+        </button>
+        <button
+          onClick = {handleRefresh}>
+          <img src="/images/icons/재검색.png" 
+               draggable="false" 
+               title="정보 갱신" 
+               className="absolute top-[25px] right-[42px] w-[30px] active:brightness-75 hover:brightness-125 transition">
           </img>
         </button>
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
@@ -540,8 +574,6 @@ export default function MainPage() {
               character.noPerStat,
               character.level
             );
-            console.log("[DEBUG] 선택한 장비의 전투력 차이:", powerDiff);
-            console.log("기존 전투력", originalPower);
             setPowerDiff(newPower - originalPower);
           }}
         />
@@ -549,7 +581,7 @@ export default function MainPage() {
     )}
 
     {showTutorial && <Tutorial onClose={handleTutorialClose} />}
-
+    {loading && <Loading visible={true} />}
     </div>
   );
 }

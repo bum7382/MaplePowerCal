@@ -4,11 +4,15 @@ import React, { useState, useEffect } from "react";
 import SearchModal from "../components/SearchModal";
 import { useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
+import { getCachedCharacter, setCachedCharacter } from "../utils/charCache";
+import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
+import { useToast } from "../utils/toastContext";
 
 export default function IntroPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   // 마운트 시 localStorage에서 즐겨찾기 불러오기
@@ -19,7 +23,7 @@ export default function IntroPage() {
 
   // 즐겨찾기에서 캐릭터 삭제
   const handleRemove = (name) => {
-    const filtered = favorites.filter((char) => char.name !== name);
+    const filtered = favorites.filter(char => char !== name);
     setFavorites(filtered);
     localStorage.setItem("favorites", JSON.stringify(filtered));
   };
@@ -36,21 +40,33 @@ export default function IntroPage() {
     setLoading(false);
     navigate("/main");
   };
-  
+
   // 즐겨찾기 캐릭터 닉네임 클릭 시 바로 검색
   const handleFavoriteClick = async (name) => {
     handleSearchStart(); // 로딩 시작
     // 실제 캐릭터 검색 API 호출 (함수는 프로젝트 구조에 맞게)
     try {
-      // 예: fetchCharacterByName는 캐릭터 데이터를 반환하는 함수라고 가정
-      const res = await fetch(`/api/character?name=${encodeURIComponent(name)}`);
-      const character = await res.json();
-      handleSearchSuccess(character);
+      // 1. 캐시 체크 (30분 이내면 캐시)
+      const cached = getCachedCharacter(name);
+      if (cached) {
+        handleSearchSuccess(cached);
+        return;
+      }
+      // 2. 캐시에 없으면 api 호출
+      const result = await fetchCharacterByName(name);
+      if (!result) {
+        setLoading(false);
+        showToast("캐릭터 정보를 불러오지 못했습니다.", "error");
+        return;
+      }
+      setCachedCharacter(name, result);
+      handleSearchSuccess(result);
     } catch (e) {
       setLoading(false);
-      alert("캐릭터 정보를 불러오지 못했습니다."); // 토스트 등으로 대체 가능
+      showToast("캐릭터 정보를 불러오지 못했습니다.", "error");
     }
   };
+
   return (
     <div
       className="select-none drag-none relative w-screen h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
@@ -105,25 +121,29 @@ export default function IntroPage() {
             </span>
           ) : (
             favorites.map((char) => (
-              <button
-                className="active:brightness-75 hover:brightness-125 transition">
+              <div
+                key={char}
+                className="active:brightness-75 hover:brightness-125 transition"
+                onClick={() => handleFavoriteClick(char)}>
                 <span
-                  key={char}
+                  
                   className="
                     flex items-center bg-white/80 rounded-full px-4 py-1 
                     text-gray-800 text-[15px] shadow font-galmuri
-                    mr-2 mb-2
-                  "
+                    mr-2 mb-2"
                 >
                   <span className="mr-2">{char}</span>
                   <button
-                    onClick={() => handleRemove(char)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // 전파 방지
+                      handleRemove(char);
+                    }}
                     className="text-red-400 ml-1 hover:text-red-700 text-[15px] font-bold mb-[4px]"
                   >
                     ✕
                   </button>
                 </span>
-              </button>
+              </div>
             ))
           )}
         </div>

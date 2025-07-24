@@ -50,35 +50,10 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess })
       return;
     }
 
-    const basicPowerChar = {
-      class: result.character_class,  // 캐릭터 직업
-      level: result.character_level,  // 캐릭터 레벨
-      title: result.title,            // 칭호
-      hyperStat: result.hyperStat,    // 하이퍼 스탯
-      ability: result.ability,        // 어빌리티
-      symbol: result.symbol,          // 심볼 정보
-      skill: result.skill,            // 0차 스킬
-      hexa_stat: result.hexa_stat,    // 헥사스킬
-      union: result.union,            // 유니온
-      artifact: result.artifact,      // 아티팩트
-      champion: result.champion,      // 유니온 챔피언
-      pet: result.pet                 // 펫 장비
-    }
-    const { baseStat, noPerStat } = initcalPower(basicPowerChar);
-    const mappedChar = {
-      name: result.character_name,    // 캐릭터 이름
-      class: result.character_class,  // 캐릭터 직업
-      level: result.character_level,  // 캐릭터 레벨
-      image: result.character_image,  // 캐릭터 이미지 URL
-      equipment: result.item,         // 장비
-      baseStat: baseStat,             // 기본 스탯
-      noPerStat: noPerStat,           // % 미적용 스탯
-    };
-
     // 캐시에 저장
-    setCachedCharacter(name, mappedChar);
-    addRecent(result.character_name);
-    if (onSearchSuccess) onSearchSuccess(mappedChar);
+    setCachedCharacter(name, result);
+    addRecent(result.name);
+    if (onSearchSuccess) onSearchSuccess(result);
   };
 
   // 최근 검색 닉네임 클릭 시 input에 넣고 바로 검색할 수도 있음

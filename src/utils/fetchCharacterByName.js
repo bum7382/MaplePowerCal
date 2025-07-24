@@ -1,8 +1,6 @@
 // frontend/src/utils/fetchCharacterByName.js
 // 캐릭터 이름으로 넥슨 API에서 캐릭터 정보를 조회하는 함수
 import { initcalPower } from "../utils/initcalPower.js";
-import { useToast } from "../utils/toastContext.jsx";
-import { getCachedCharacter, setCachedCharacter } from "../utils/charCache.js";
 
 export async function fetchCharacterByName(name) {
   try {
@@ -10,7 +8,7 @@ export async function fetchCharacterByName(name) {
     if (!res.ok) throw new Error("서버 오류");
     const result = await res.json(); // 넥슨 API 결과
 
-    if (!result || result?.error) {showToast("❌ 캐릭터를 찾을 수 없습니다.", "error"); return null;}
+    if (!result || result?.error) return null;
 
     // 데이터 전처리
     const basicPowerChar = {
@@ -42,7 +40,6 @@ export async function fetchCharacterByName(name) {
 
     return mappedChar;
   } catch (err) {
-    showToast("❌ 넥슨 캐릭터 조회 실패:", "error");
     return null;
   }
 }
