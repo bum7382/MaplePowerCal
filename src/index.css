@@ -10,22 +10,22 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  cursor: url('public/images/mouse/Cursor.png'), auto;
+  cursor: url('/images/mouse/Cursor.png'), auto;
 }
 
 /* hover 커서 */
 button:hover, a:hover, input:hover, textarea:hover, select:hover, label:hover {
-  cursor: url('public/images/mouse/Cursor.hover.png'), auto !important;
+  cursor: url('/images/mouse/Cursor.hover.png'), auto !important;
 }
 
 /* 클릭 커서 */
 button:active, a:active, input:active, textarea:active, select:active, label:active {
-  cursor: url('public/images/mouse/Cursor.click.png'), auto !important;
+  cursor: url('/images/mouse/Cursor.click.png'), auto !important;
 }
 
 /* 스크롤 커서 */
 .scrollable-area, .scrollable-area:active, .scrollable-area:hover {
-  cursor: url('public/images/mouse/Cursor.scroll.png'), auto !important;
+  cursor: url('/images/mouse/Cursor.scroll.png'), auto !important;
 }
 
 @font-face {
@@ -37,7 +37,7 @@ button:active, a:active, input:active, textarea:active, select:active, label:act
 
 @font-face {
   font-family: 'KOHIBaeum';
-  src: url('/public/fonts/KOHIBaeum.ttf') format('truetype');
+  src: url('/fonts/KOHIBaeum.ttf') format('truetype');
 }
 
 @font-face {

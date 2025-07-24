@@ -406,7 +406,6 @@ export default function EquipmentInfo({
       character.level
     );
     const scaledDiff = newPower - originalPower;
-    console.log(`scaledDiff: ${scaledDiff}`)
     setPowerDiff(scaledDiff);
 
     onSave?.(updated, scaledDiff);

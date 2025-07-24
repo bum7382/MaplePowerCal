@@ -257,8 +257,7 @@ export default function MainPage() {
         </div>
         
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[454px] left-[14px] w-[172px] h-[22px]" />
-        <div draggable="false" className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center"
-          onClick={() => setShowModal(true)}>
+        <div draggable="false" className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
             {/* 캐릭터 이미지 & 이름 */}
           <img src={character?.image || "/images/default_character.png"} draggable="false" className="w-[130px]" />
           <div className="flex flex-row items-center space-x-1">
