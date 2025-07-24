@@ -162,17 +162,18 @@ export default function EquipmentInfo({
 
     return <div className="flex flex-col items-center space-y-[8px] mt-1 mb-2">{rows}</div>;
   };
-
   // 옵션 표시
   const renderStatLine = (label, key) => {
+    const weaponSlots = ["무기", "훈장"];
+
     const base = +item.item_base_option?.[key] || 0;  // 기본 옵션
     const isPercent = percentKeys.includes(key);  // 퍼센트 옵션 여부
     const slot = item.item_equipment_slot;  // 장비 슬롯
 
     const allowBySlot =
       commonStats.includes(key) ||
-      (weaponOnly.includes(key) && slot === "무기") ||
-      (armorOnly.includes(key) && slot !== "무기");
+      (weaponOnly.includes(key) && weaponSlots.includes(slot)) ||
+      (armorOnly.includes(key) && !weaponSlots.includes(slot));
 
     if (!allowBySlot) return null;
 

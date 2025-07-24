@@ -35,6 +35,7 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
 
   // 2. 변환 함수
   function convertToNexonFormat(apiData) {
+    console.log(apiData.metaInfo.bdR)
     const nexonBaseOption = {}
 
     // 기본값 0으로 채우기
@@ -44,11 +45,10 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
 
     // 받아온 값으로 교체
     Object.entries(statMap).forEach(([myKey, nexonKey]) => {
-      if (apiData.stats && apiData.stats[myKey] !== undefined) {
-        nexonBaseOption[nexonKey] = String(apiData.stats[myKey]);
+      if (apiData.metaInfo && apiData.metaInfo[myKey] !== undefined) {
+        nexonBaseOption[nexonKey] = String(apiData.metaInfo[myKey]);
       }
     });
-
     const finalOption = {
       additional_potential_option_1: null,
       additional_potential_option_2: null,
@@ -81,11 +81,11 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
       },
       item_base_option: {
         ...nexonBaseOption,
-        base_equipment_level: apiData.requiredStats.level,
+        all_stat: "0",
         max_hp_rate: "0",
         max_mp_rate: "0"
       },
-      item_description: apiData.io_desc,
+      item_description: apiData.description.description,
       item_equipment_part: getBaseSlotName(slot),
       item_equipment_slot: slot,
       item_etc_option: {
@@ -113,10 +113,10 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
         str: "0" 
       },
       item_gender: null,
-      item_icon: `https://api.maplestory.net/item/${apiData.itemId}/icon`,
-      item_name: apiData.io_name,
-      item_shape_icon: `https://api.maplestory.net/item/${apiData.itemId}/icon`,
-      item_shape_name: apiData.io_name,
+      item_icon: `https://maplestory.io/api/KMS/389/item/${apiData.description.id}/icon`,
+      item_name: apiData.description.name,
+      item_shape_icon: `https://maplestory.io/api/KMS/389/item/${apiData.description.id}/icon`,
+      item_shape_name: apiData.description.name,
       item_starforce_option: {
         armor: "0",
         attack_power: "0",
@@ -172,17 +172,10 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
   });
 
   function handleItemSelect(itemId) {
-    Promise.all([
-      fetch(`https://maplestory.io/api/KMS/389/item/${itemId}`).then(res => res.json()),
-      fetch(`https://api.maplestory.net/item/${itemId}`).then(res => res.json())
-    ])
-      .then(([ioData, netData]) => {
-        const mergedData = {
-          ...netData,
-          io_desc: ioData.description?.description || "",
-          io_name: ioData.description?.name || "",
-        };
-        const finalItem = convertToNexonFormat(mergedData);
+    fetch(`https://maplestory.io/api/KMS/389/item/${itemId}`)
+      .then(res => res.json())
+      .then((ioData) => {
+        const finalItem = convertToNexonFormat(ioData);
         if (typeof onSelectItem === "function") {
           onSelectItem(finalItem);
         }
