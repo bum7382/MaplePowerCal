@@ -1,7 +1,8 @@
+@import url('https://fastly.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 html, body, #root {
   width: 100%;
@@ -9,8 +10,23 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  cursor: url('public/images/mouse/Cursor.png'), auto;
 }
 
+/* hover 커서 */
+button:hover, a:hover, input:hover, textarea:hover, select:hover, label:hover {
+  cursor: url('public/images/mouse/Cursor.hover.png'), auto !important;
+}
+
+/* 클릭 커서 */
+button:active, a:active, input:active, textarea:active, select:active, label:active {
+  cursor: url('public/images/mouse/Cursor.click.png'), auto !important;
+}
+
+/* 스크롤 커서 */
+.scrollable-area, .scrollable-area:active, .scrollable-area:hover {
+  cursor: url('public/images/mouse/Cursor.scroll.png'), auto !important;
+}
 
 @font-face {
     font-family: 'MaplestoryOTFBold';
@@ -20,12 +36,18 @@ html, body, #root {
 }
 
 @font-face {
-  font-family: 'morris9';
-  src: url('/public/fonts/morris9.ttf') format('truetype');
-}
-
-@font-face {
   font-family: 'KOHIBaeum';
   src: url('/public/fonts/KOHIBaeum.ttf') format('truetype');
 }
 
+@font-face {
+  font-family: 'KoPubWorldDotum';
+  src: url('/fonts/KoPubWorldDotum.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'dalmoori';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/dalmoori.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}

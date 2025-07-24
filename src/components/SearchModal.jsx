@@ -89,7 +89,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess })
   return (
     <div className="select-none fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex items-center justify-center z-50">
       <div className="bg-white rounded-[20px] w-[600px] p-10 relative shadow-lg">
-        <div className="absolute -top-[36px] left-[25px] bg-[#44B7CF] font-morris text-white px-6 py-2 rounded-t-lg text-sm shadow-md z-20">
+        <div className="absolute -top-[36px] left-[25px] bg-[#44B7CF] font-galmuri text-white px-6 py-2 rounded-t-lg text-sm shadow-md z-20">
           캐릭터 검색
         </div>
 
@@ -101,7 +101,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess })
           />
         </div>
 
-        <div className="flex rounded-full bg-gray-100 overflow-hidden font-morris shadow-inner">
+        <div className="flex rounded-full bg-gray-100 overflow-hidden font-galmuri shadow-inner">
           <input
             type="text"
             placeholder="캐릭터 이름을 입력하세요."
@@ -113,7 +113,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess })
           <button
             type="button"
             onClick={() => handleSearch()}
-            className="bg-[#44B7CF] text-white px-6 text-sm font-morris hover:bg-[#369EBC]"
+            className="bg-[#44B7CF] text-white px-6 text-sm font-galmuri hover:bg-[#369EBC]"
           >
             검색
           </button>
@@ -123,12 +123,12 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess })
         <div className="mt-5">
           {recent.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-gray-500 font-morris text-sm mr-1">최근 검색 :</span>
+              <span className="text-gray-500 font-galmuri text-sm mr-1">최근 검색 :</span>
               {recent.slice(0, 5).map((name) => (
                 <button
                   key={name}
                   type="button"
-                  className="bg-white border border-[#44B7CF] text-[#44B7CF] font-morris rounded-full px-3 py-1 text-sm shadow hover:bg-[#44B7CF] hover:text-white transition"
+                  className="bg-white border border-[#44B7CF] text-[#44B7CF] font-galmuri rounded-full px-3 py-1 text-sm shadow hover:bg-[#44B7CF] hover:text-white transition"
                   onClick={() => handleRecentClick(name)}
                 >
                   {name}

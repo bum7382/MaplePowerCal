@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import slotMap from "../data/itemTypeToSlot.json";
 import statMap from "../data/statMap.json";
+import { useToast } from "../utils/toastContext";
 
 export default function EquipmentSearch({ slot, onSelectItem }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -181,19 +183,18 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
           io_name: ioData.description?.name || "",
         };
         const finalItem = convertToNexonFormat(mergedData);
-        console.log(finalItem);
         if (typeof onSelectItem === "function") {
           onSelectItem(finalItem);
         }
       })
       .catch((err) => {
-        console.error("아이템 상세 조회 실패:", err);
+        showToast("사이트에서 기본 정보를 제공하지 않아 장착 불가합니다.", "error");
       });
   }
 
 
   return (
-    <div className="w-[320px] bg-[#1F2735] text-white rounded shadow-lg p-4 font-morris">
+    <div className="w-[320px] bg-[#1F2735] text-white rounded shadow-lg p-4 font-galmuri">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg">{slot} 장비 검색</h2>
       </div>
@@ -215,7 +216,7 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
                 onClick={() => handleItemSelect(item.id)} // 선택 시 처리
             >
                 <img
-                src={`https://api.maplestory.net/item/${item.id}/icon`}
+                src={`https://maplestory.io/api/KMS/389/item/${item.id}/icon`}
                 alt={item.name}
                 className="w-8 h-8"
                 />

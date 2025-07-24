@@ -56,7 +56,7 @@ export default function BasicStatModal({ jobClass, mainStat, subStat, isMagicCla
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center font-morris z-[999]">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center font-galmuri z-[999]">
       <div className="bg-white p-4 rounded shadow w-[600px] space-y-3 relative">
         <div
           onMouseEnter={() => setHoveringExample(true)}

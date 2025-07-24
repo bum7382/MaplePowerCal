@@ -36,7 +36,21 @@ export default function IntroPage() {
     setLoading(false);
     navigate("/main");
   };
-
+  
+  // 즐겨찾기 캐릭터 닉네임 클릭 시 바로 검색
+  const handleFavoriteClick = async (name) => {
+    handleSearchStart(); // 로딩 시작
+    // 실제 캐릭터 검색 API 호출 (함수는 프로젝트 구조에 맞게)
+    try {
+      // 예: fetchCharacterByName는 캐릭터 데이터를 반환하는 함수라고 가정
+      const res = await fetch(`/api/character?name=${encodeURIComponent(name)}`);
+      const character = await res.json();
+      handleSearchSuccess(character);
+    } catch (e) {
+      setLoading(false);
+      alert("캐릭터 정보를 불러오지 못했습니다."); // 토스트 등으로 대체 가능
+    }
+  };
   return (
     <div
       className="select-none drag-none relative w-screen h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
@@ -54,7 +68,7 @@ export default function IntroPage() {
       <div className="flex gap-[100px]">
         <button
           onClick={() => setShowSearch(true)}
-          className="w-[160px] h-[50px] font-morris text-white text-[18px] rounded-full 
+          className="w-[160px] h-[50px] font-galmuri text-white text-[16px] rounded-full 
                      bg-[#44B7CF] hover:bg-[#369EBC] border-2 border-white shadow-md mb-4"
         >
           캐릭터 검색하기
@@ -73,7 +87,7 @@ export default function IntroPage() {
             absolute
             left-[21px] 
             -top-[30px]
-            text-white text-[15px] font-morris tracking-widest select-none
+            text-white text-[15px] font-galmuri tracking-widest select-none
             bg-[#44B7CF]/80 px-4 py-1 shadow rounded-[10px] backdrop-blur-md
             z-0
           "
@@ -86,28 +100,30 @@ export default function IntroPage() {
           scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#44B7CF]/80
         ">
           {favorites.length === 0 ? (
-            <span className="text-gray-400 text-base font-morris">
+            <span className="text-gray-400 text-base font-galmuri">
               즐겨찾기 캐릭터가 없습니다
             </span>
           ) : (
             favorites.map((char) => (
-              <span
-                key={char.name}
-                className="
-                  flex items-center bg-white/80 rounded-full px-4 py-1 
-                  text-gray-800 text-[15px] shadow font-morris
-                  mr-2 mb-2
-                "
-              >
-                <span className="mr-2">{char.name}</span>
-                <button
-                  onClick={() => handleRemove(char.name)}
-                  className="text-red-400 ml-1 hover:text-red-700 text-lg font-bold"
-                  style={{ lineHeight: 1 }}
+              <button
+                className="active:brightness-75 hover:brightness-125 transition">
+                <span
+                  key={char}
+                  className="
+                    flex items-center bg-white/80 rounded-full px-4 py-1 
+                    text-gray-800 text-[15px] shadow font-galmuri
+                    mr-2 mb-2
+                  "
                 >
-                  X
-                </button>
-              </span>
+                  <span className="mr-2">{char}</span>
+                  <button
+                    onClick={() => handleRemove(char)}
+                    className="text-red-400 ml-1 hover:text-red-700 text-[15px] font-bold mb-[4px]"
+                  >
+                    ✕
+                  </button>
+                </span>
+              </button>
             ))
           )}
         </div>

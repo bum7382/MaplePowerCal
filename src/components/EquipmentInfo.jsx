@@ -34,7 +34,7 @@ const commonStats = [
 ];
 
 // 무기 전용 옵션
-const weaponOnly = ["boss_damage", "ignore_monster_armor"];
+const weaponOnly = ["boss_damage", "ignore_monster_armor", "damage"];
 // 방어구 전용 옵션
 const armorOnly = ["speed", "jump"];
 
@@ -230,7 +230,7 @@ export default function EquipmentInfo({
 
 
     return (
-      <div className="font-morris flex justify-between text-sm text-white items-center gap-2">
+      <div className="font-galmuri flex justify-between text-sm text-white items-center gap-2">
         <span>{label}</span>
         <span className="flex items-center gap-1">
           +{total}{isPercent ? "%" : ""}
@@ -458,7 +458,7 @@ export default function EquipmentInfo({
 
 
   return (
-    <div className="absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-morris
+    <div className="absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-galmuri
                     overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent">
       <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
 
@@ -485,7 +485,7 @@ export default function EquipmentInfo({
               : `${diff === 0 ? "" : diff > 0 ? "+" : "-"}${formatKoreanNumber(Math.abs(diff))}`}
           </p>
           {diff > 0 && price !== "0" && Number(price) !== 0 && (
-          <div className="mt-3 text-s text-white font-morris text-right">
+          <div className="mt-3 text-s text-white font-galmuri text-right">
             1억 메소당 전투력 +{((diff / Number(price)) * 100000000).toFixed(2)}
           </div>
         )}

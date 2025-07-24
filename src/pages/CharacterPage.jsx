@@ -178,8 +178,8 @@ export default function CharacterPage() {
                   </button>
 
                   <img src={char.image} alt="char" className="w-[110px] rounded scale-x-[-1]" />
-                  <p className="text-[#F6D5AF] text-s font-morris ">Lv. {char.level}</p>
-                  <p className="text-white text-[18px] font-morris">{char.name}</p>
+                  <p className="text-[#F6D5AF] text-s font-galmuri ">Lv. {char.level}</p>
+                  <p className="text-white text-[18px] font-galmuri">{char.name}</p>
                 </>
               ) : isAddSlot ? (
                 <span className="text-white text-4xl font-maple">+</span>
@@ -192,7 +192,7 @@ export default function CharacterPage() {
       {/* 결정 버튼 */}
       <div className="absolute bottom-7 right-[415px]">
         <button
-          className={`px-10 py-2 rounded-[20px] text-white text-l font-morris transition 
+          className={`px-10 py-2 rounded-[20px] text-white text-l font-galmuri transition 
             ${selectedIndex != null ? "bg-[#44B7CF] hover:bg-[#369EBC]" : "bg-gray-500 cursor-not-allowed"}`}
           disabled={selectedIndex == null}
           onClick={handleConfirm}

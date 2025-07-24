@@ -9,6 +9,7 @@ import EquipmentSearch from "../components/EquipmentSearch.jsx";
 import { useNavigate } from "react-router-dom";
 import { isItemChanged } from "../utils/equipmentUtils";
 import { useToast } from "../utils/toastContext";
+import Tutorial from "../components/Tutorial.jsx";
 import { v4 as uuidv4 } from 'uuid';
 
 export default function MainPage() {
@@ -49,6 +50,20 @@ export default function MainPage() {
   const [hoveredInventoryItem, setHoveredInventoryItem] = useState(null); // 인벤토리 아이템 호버 상태
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
+
+
+  useEffect(() => {
+    // localStorage에 튜토리얼 본 기록이 없으면 튜토리얼 띄움
+    const hasSeen = localStorage.getItem("tutorialSeen");
+    if (!hasSeen) setShowTutorial(true);
+  }, []);
+
+  const handleTutorialOpen = () => setShowTutorial(true);
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+    localStorage.setItem("tutorialSeen", "true");
+  };
 
   // 캐릭터 정보
   const [character, setCharacter] = useState(null);
@@ -126,6 +141,27 @@ export default function MainPage() {
     }
   };
 
+  const [isFavorite, setIsFavorite] = useState( // 즐겨찾기 여부
+    () => JSON.parse(localStorage.getItem("favorites") || "[]").includes(character?.name)
+  );
+  
+  const handleFavoriteClick = () => {
+    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    let newFavorites;
+    if (favorites.includes(character?.name)) {
+      // 삭제
+      newFavorites = favorites.filter((item) => item !== character?.name);
+      setIsFavorite(false);
+      showToast("즐겨찾기에서 삭제되었습니다.", "error");
+    } else {
+      // 추가
+      newFavorites = [...favorites, character?.name];
+      setIsFavorite(true);
+      showToast("즐겨찾기에 추가되었습니다.", "success");
+    }
+    localStorage.setItem("favorites", JSON.stringify(newFavorites));
+  };
+
   // 전투력 표시 포맷
   function formatKoreanNumber(num) {
     const abs = Math.abs(num);
@@ -140,6 +176,7 @@ export default function MainPage() {
 
     return parts.join(" ");
   }
+
   const slotStyle = "absolute w-[48px] h-[48px] bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
   const slots = [
     ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 115 + i * 51, left: 34 })),
@@ -160,9 +197,17 @@ export default function MainPage() {
       <div className="relative w-[420px] aspect-[420/509] ">
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
         <img src="/images/inventory/equipmentUI.png" draggable="false" className="absolute top-[70px] left-[17px] w-[390px]" />
+        <button
+          onClick = {handleTutorialOpen}>
+          <img src="/images/tutorial/정보창.png" 
+               draggable="false" 
+               title="튜토리얼" 
+               className="absolute top-[25px] right-[7px] w-[30px] active:brightness-75 hover:brightness-125 transition">
+          </img>
+        </button>
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
           <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-60 px-4 py-1 rounded">
-            <span className="font-morris absolute left-4 text-[14px] text-[#E0E8F2]">
+            <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2]">
               전투력 증가량:
             </span>
             <span
@@ -178,16 +223,28 @@ export default function MainPage() {
         </div>
         
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[454px] left-[14px] w-[172px] h-[22px]" />
-        <div className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center"
+        <div draggable="false" className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center"
           onClick={() => setShowModal(true)}>
             {/* 캐릭터 이미지 & 이름 */}
           <img src={character?.image || "/images/default_character.png"} draggable="false" className="w-[130px]" />
-          <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-morris relative -top-[5px]">
+          <div className="flex flex-row items-center space-x-1">
+            <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-galmuri relative -top-[5px]">
             {character?.name || "이름없음"}
-          </span>
+            </span>
+            <button 
+              onClick = {handleFavoriteClick}
+              className="active:brightness-75 hover:brightness-110 transition">
+              <img
+                src={isFavorite ? "/images/icons/즐겨찾기on.png" : "/images/icons/즐겨찾기off.png"}
+                className="mb-[5px]"
+                alt="즐겨찾기"
+                draggable={false}
+              />
+            </button>
+          </div>
         </div>
         <button
-          className="absolute top-[380px] left-[170px] px-4 py-2 bg-[#44B7CF] text-white text-sm font-morris rounded hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50"
+          className="absolute top-[380px] left-[170px] px-4 py-2 bg-[#44B7CF] text-white text-sm font-galmuri rounded hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50"
           onClick={() => navigate("/")}
         >
           처음으로
@@ -314,7 +371,7 @@ export default function MainPage() {
                 setShowInfo(false);
                 setInfoLocked(false);
               }}
-              className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-morris px-4 py-1 rounded text-sm"
+              className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-galmuri px-4 py-1 rounded text-[13px]"
             >
               초기화
             </button>
@@ -335,7 +392,7 @@ export default function MainPage() {
                   setInventory((prev) => [...prev, newItem]);
                 }
               }}
-              className="bg-[#44B7CF] hover:bg-[#60DCF6] active:bg-[#2b7f94] font-morris text-white px-4 py-1 rounded text-sm"
+              className="bg-[#44B7CF] hover:bg-[#60DCF6] active:bg-[#2b7f94] font-galmuri text-white px-4 py-1 rounded text-[13px]"
             >
               인벤토리에 저장
             </button>
@@ -491,6 +548,7 @@ export default function MainPage() {
       </div>
     )}
 
+    {showTutorial && <Tutorial onClose={handleTutorialClose} />}
 
     </div>
   );

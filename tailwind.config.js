@@ -5,8 +5,9 @@ export default {
     extend: {      
       fontFamily: {
         maple: ['"MaplestoryOTFBold"', 'sans-serif'],
-        morris: ['"morris9"', 'sans-serif'],
         kohi: ['"KOHIBaeum"', 'sans-serif'],
+        galmuri: ['Galmuri9', 'sans-serif'],
+        dotum: ['KoPubWorldDotum', 'sans-serif'],
       },
       animation: {
       'fade-in': 'fadeIn 0.3s ease-out',
