@@ -154,6 +154,25 @@ export default function MainPage() {
     setIsFavorite(favs.includes(character.name));
   }, [character]);
     
+  // 전체 장비 초기화 
+  const handleResetAllEquipment = () => {
+    setEquipment(originalEquipment);
+    setSavedSlots({});
+    setSlotColors({});
+
+    const newPower = calculatePower(
+      Object.values(originalEquipment),
+      character.class,
+      character.baseStat,
+      character.noPerStat,
+      character.level
+    );
+    setPowerDiff(newPower - originalPower);
+
+    setShowInfo(false);
+    setInfoLocked(false);
+  };
+
   const handleFavoriteClick = () => {
     const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     let newFavorites;
@@ -243,12 +262,11 @@ export default function MainPage() {
           </img>
         </button>
         <button
-          onClick = {handleRefresh}>
-          <img src="/images/icons/재검색.png" 
-               draggable="false" 
-               title="정보 갱신" 
-               className="absolute top-[25px] right-[42px] w-[30px] active:brightness-75 hover:brightness-125 transition">
-          </img>
+          onClick = {handleRefresh}
+          className="absolute top-[25px] right-[42px] bg-[#1F2735] bg-opacity-60 w-[85px] h-[30px] rounded text-[13px]
+          font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center" 
+          >
+          정보 갱신
         </button>
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
           <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-60 px-4 py-1 rounded">
@@ -398,6 +416,15 @@ export default function MainPage() {
         ))}
         {selectedSlot && (
           <div className="absolute bottom-2 right-2 flex gap-2">
+            {/* 전체 초기화 버튼 */}
+            <button
+              onClick={handleResetAllEquipment}
+              className="bg-red-600 w-[90px] h-[30px] rounded text-[13px]
+              font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center"
+            >
+              전체 초기화
+            </button>
+
             {/* 초기화 버튼 */}
             <button
               onClick={() => {

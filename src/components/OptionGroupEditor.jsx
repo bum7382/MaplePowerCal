@@ -148,9 +148,12 @@ export default function OptionGroupEditor({ item, type, onChange }) {
               onChange={(e) => {
                 const selected = options.find((o) => o.id === Number(e.target.value));
                 const updated = [...parsedOptions];
+
+                const prevValues = updated[idx]?.values ?? {};  // 기존 수치 유지
+
                 updated[idx] = {
                   template: selected || null,
-                  values: {},
+                  values: { ...prevValues }
                 };
                 setParsedOptions(updated);
               }}
