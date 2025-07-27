@@ -3,26 +3,8 @@ import potentialOptions from "../data/potentialOptions.json";
 import setEffect from "../data/setEffect.json";
 import soulOptions from "../data/soulOptions.json";
 
-const baseStat = {
-    STR: 4,
-    DEX: 4,
-    INT: 4,
-    LUK: 4,
-    atk: 0,
-    magic: 0,
-    damage: 0,
-    boss_damage: 0,
-    crit_damage: 0,
-};
-
-const noPerStat = {
-    STR: 0,
-    DEX: 0,
-    INT: 0,
-    LUK: 0
-}
 // 0. 기본 스탯
-function basicPower(character_level, character_class){
+function basicPower(character_level, character_class, baseStat, noPerStat){
   // 직업별 주력 스탯 찾기
   const jobInfo = jobStat.find(j => j.class === character_class);
   const mainStat = jobInfo?.main_stat ?? null;
@@ -30,7 +12,7 @@ function basicPower(character_level, character_class){
 }
 
 // 1. 칭호
-function titlePower(title) {
+function titlePower(title, baseStat, noPerStat) {
   if (!title || !title.title_description) return;
 
   // 효과 줄 단위로 파싱
@@ -66,7 +48,7 @@ function titlePower(title) {
 }
 
 // 2. 어빌리티
-function abilityPower(character_level, ability) {
+function abilityPower(character_level, ability, baseStat, noPerStat) {
   ability.forEach(({ ability_value }) => {
     // 한 줄에 여러 효과가 콤마로 있을 수 있음
     const effects = ability_value.split(",").map(e => e.trim());
@@ -136,7 +118,7 @@ function abilityPower(character_level, ability) {
 }
 
 // 3. 유니온 아티팩트
-function artifactPower(artifact) {
+function artifactPower(artifact, baseStat, noPerStat) {
   artifact.forEach(({ name }) => {
     let m;
     // 올스탯 N 증가
@@ -182,7 +164,7 @@ function artifactPower(artifact) {
 }
 
 // 4. 유니온 챔피언
-function championPower(champion) {
+function championPower(champion, baseStat, noPerStat) {
   champion.forEach(({ stat }) => {
     let m;
     // 올스탯 N 증가
@@ -217,7 +199,7 @@ function championPower(champion) {
 }
 
 // 5. 헥사 스탯
-function hexaStatPower(hexa_stat, character_class){
+function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
   const hexaCoreValue = {
     "공격력 증가": { main: [0, 5, 10, 15, 20, 30, 40, 50, 65, 80, 100], 
 				     sub: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50] },
@@ -274,7 +256,7 @@ function hexaStatPower(hexa_stat, character_class){
 }
 
 // 6. 하이퍼 스탯
-function hyperStatPower(hyperStat) {
+function hyperStatPower(hyperStat, baseStat, noPerStat) {
   hyperStat.forEach(({ stat_increase }) => {
     if (!stat_increase) return;
     let m;
@@ -311,7 +293,7 @@ function hyperStatPower(hyperStat) {
 }
 
 // 7. 스킬
-function skillPower(skill) {
+function skillPower(skill, baseStat, noPerStat) {
   skill.forEach(({ skill_effect }) => {
     if (!skill_effect) return;
 
@@ -327,7 +309,7 @@ function skillPower(skill) {
 }
 
 // 8. 심볼
-function symbolPower(symbol, character_class) {
+function symbolPower(symbol, character_class, baseStat, noPerStat) {
 
   // 직업별 주력 스탯 찾기
   const jobInfo = jobStat.find(j => j.class === character_class);
@@ -350,7 +332,7 @@ function symbolPower(symbol, character_class) {
 }
 
 // 9. 유니온
-function unionPower(union) {
+function unionPower(union, baseStat, noPerStat) {
   if (union.union_occupied) {
     union.union_occupied.forEach(effect => {
       let m;
@@ -419,7 +401,7 @@ function unionPower(union) {
 }
 
 // 10. 펫장비
-function petPower(pet){
+function petPower(pet, baseStat, noPerStat){
   if (pet) {
     for (let i = 1; i <= 3; i++) {
       const eq = pet[`pet_${i}_equipment`];
@@ -437,16 +419,36 @@ function petPower(pet){
 
 
 export function initcalPower(character){
-    basicPower(character.level, character.class);
-    titlePower(character.title);
-    abilityPower(character.level, character.ability);
-    artifactPower(character.artifact);
-    championPower(character.champion);
-    hexaStatPower(character.hexa_stat, character.class);
-    hyperStatPower(character.hyperStat);
-    skillPower(character.skill);
-    symbolPower(character.symbol, character.class);
-    unionPower(character.union);
-    petPower(character.pet);
-    return {baseStat, noPerStat};
+  const baseStat = {
+    STR: 4,
+    DEX: 4,
+    INT: 4,
+    LUK: 4,
+    atk: 0,
+    magic: 0,
+    damage: 0,
+    boss_damage: 0,
+    crit_damage: 0,
+  };
+
+  const noPerStat = {
+    STR: 0,
+    DEX: 0,
+    INT: 0,
+    LUK: 0
+  };
+
+  basicPower(character.level, character.class, baseStat, noPerStat);
+  titlePower(character.title, baseStat, noPerStat);
+  abilityPower(character.level, character.ability, baseStat, noPerStat);
+  artifactPower(character.artifact, baseStat, noPerStat);
+  championPower(character.champion, baseStat, noPerStat);
+  hexaStatPower(character.hexa_stat, character.class, baseStat, noPerStat);
+  hyperStatPower(character.hyperStat, baseStat, noPerStat);
+  skillPower(character.skill, baseStat, noPerStat);
+  symbolPower(character.symbol, character.class, baseStat, noPerStat);
+  unionPower(character.union, baseStat, noPerStat);
+  petPower(character.pet, baseStat, noPerStat);
+  
+  return {baseStat, noPerStat};
 }

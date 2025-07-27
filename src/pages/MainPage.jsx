@@ -13,7 +13,8 @@ import Tutorial from "../components/Tutorial.jsx";
 import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
 import Loading from "../components/Loading";
 import { v4 as uuidv4 } from 'uuid';
-import { getCachedCharacter, setCachedCharacter } from "../utils/charCache";
+import { getCachedCharacter, setCachedCharacter, removeCachedCharacter } from "../utils/charCache";
+
 
 export default function MainPage() {
   const [loading, setLoading] = useState(true); // 로딩 상태
@@ -35,6 +36,7 @@ export default function MainPage() {
   const [powerDiff, setPowerDiff] = useState(0);  // 전투력
   const [originalPower, setOriginalPower] = useState(0);  // 원본 전투력
   const [initDone, setInitDone] = useState(false);
+  const [showCalPower, setShowCalPower] = useState(false);
   
   // 인벤토리
   const [inventory, setInventory] = useState(() => {
@@ -174,14 +176,23 @@ export default function MainPage() {
     try {
       const result = await fetchCharacterByName(character.name);
       if (!result) {
-        // 실패 시 처리(토스트 등)
+        // 실패 시 처리
         setLoading(false);
         showToast("정보 갱신에 실패했습니다.", "error");
         return;
       }
-      setCachedCharacter(character.name, result); // 캐시도 새로 저장
-      // 상태도 새로 저장(예시)
-      // setCharacter(result); 등
+      removeCachedCharacter(character.name);  // 캐시 삭제
+      setCachedCharacter(character.name, result); // 캐시 새로 저장
+      // 전투력 재계산
+      const basePower = calculatePower(
+        result.equipment, 
+        result.class,
+        result.baseStat,
+        result.noPerStat,
+        result.level
+      );
+      setOriginalPower(basePower);
+      
       setLoading(false);
       showToast("정보가 갱신되었습니다.", "success")
     } catch (e) {
@@ -259,7 +270,20 @@ export default function MainPage() {
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[454px] left-[14px] w-[172px] h-[22px]" />
         <div draggable="false" className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
             {/* 캐릭터 이미지 & 이름 */}
-          <img src={character?.image || "/images/default_character.png"} draggable="false" className="w-[130px]" />
+          <img src={character?.image || "/images/default_character.png"} 
+               draggable="false" 
+               className="w-[130px]" 
+               onMouseEnter={() => setShowCalPower(true)}
+               onMouseLeave={() => setShowCalPower(false)}
+          />
+          {/* 툴팁 */}
+          {showCalPower && (
+            <div className="absolute bottom-[196px] left-1/2 -translate-x-1/2 ml-2 px-3 py-1 bg-[#1F2735] bg-opacity-60 text-white 
+            text-xs rounded shadow-lg whitespace-nowrap z-20 font-galmuri text-center">
+              계산된 기본 전투력: {formatKoreanNumber(originalPower) || "0"} <br />
+              원본 전투력: {formatKoreanNumber(character.power) || "0"}
+            </div>
+          )}
           <div className="flex flex-row items-center space-x-1">
             <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-galmuri relative -top-[5px]">
             {character?.name || "이름없음"}
@@ -520,7 +544,7 @@ export default function MainPage() {
       <EquipmentInfo
         item={hoveredInventoryItem}
         editable={false}
-        slot={hoveredInventoryItem.item_equipment_slot}
+        slot={selectedSlot || hoveredInventoryItem.item_equipment_slot}
         onClose={() => setHoveredInventoryItem(null)}
         originalEquipment={originalEquipment} // 원본 장비 정보 전달
         currentEquipment={{ // 현재 장비 상태

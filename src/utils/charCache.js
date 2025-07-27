@@ -39,3 +39,15 @@ export function setCachedCharacter(name, data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
 }
 
+// 캐시 삭제
+export const removeCachedCharacter = (name) => {
+  const cacheStr = localStorage.getItem(STORAGE_KEY);
+  if (!cacheStr) return;
+  try {
+    const cache = JSON.parse(cacheStr);
+    delete cache[name];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+  } catch {
+    // 파싱 실패 시 무시
+  }
+};

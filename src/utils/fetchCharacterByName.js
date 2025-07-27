@@ -33,6 +33,7 @@ export async function fetchCharacterByName(name) {
       class: result.character_class,  // 캐릭터 직업
       level: result.character_level,  // 캐릭터 레벨
       image: result.character_image,  // 캐릭터 이미지 URL
+      power: result.combat_power,      // 전투력
       equipment: result.item,         // 장비
       baseStat: baseStat,             // 기본 스탯
       noPerStat: noPerStat,           // % 미적용 스탯
