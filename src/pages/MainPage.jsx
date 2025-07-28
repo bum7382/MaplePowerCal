@@ -81,7 +81,7 @@ export default function MainPage() {
       try {
         setCharacter(JSON.parse(saved));
       } catch (e) {
-        console.error("❌ 캐릭터 데이터 파싱 실패", e);
+        showToast("캐릭터를 받아오는데에 실패했습니다.", "error");
         setCharacter(null);
       }
     } else {

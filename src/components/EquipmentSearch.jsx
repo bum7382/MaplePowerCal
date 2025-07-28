@@ -46,7 +46,6 @@ useEffect(() => {
 
   // 2. 변환 함수
   function convertToNexonFormat(apiData) {
-    console.log(apiData.metaInfo.bdR)
     const nexonBaseOption = {}
 
     // 기본값 0으로 채우기

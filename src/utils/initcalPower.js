@@ -1,14 +1,19 @@
 import jobStat from "../data/jobStat.json";
-import potentialOptions from "../data/potentialOptions.json";
-import setEffect from "../data/setEffect.json";
-import soulOptions from "../data/soulOptions.json";
 
 // 0. 기본 스탯
 function basicPower(character_level, character_class, baseStat, noPerStat){
   // 직업별 주력 스탯 찾기
   const jobInfo = jobStat.find(j => j.class === character_class);
   const mainStat = jobInfo?.main_stat ?? null;
-  baseStat[mainStat] = 18 + 5 * character_level;
+  if(character_class == "데몬어벤져") {baseStat.pure_HP += 545 + 90 * character_level; return;}
+  if (Array.isArray(mainStat)) {
+  // 제논: STR, DEX, LUK 모두 동일한 방식으로 세팅
+  mainStat.forEach(stat => {
+    baseStat[stat] += 18 + 5 * character_level;
+    });
+  } else {
+    baseStat[mainStat] += 18 + 5 * character_level;
+  }
 }
 
 // 1. 칭호
@@ -44,6 +49,14 @@ function titlePower(title, baseStat, noPerStat) {
       baseStat.boss_damage += Number(m[1]);
       return;
     }
+
+    // 최대 HP/최대 MP +N
+    m = effect.match(/^최대 HP\/최대 MP\s*\+?(\d+)/);
+    if (m) {
+      const n = Number(m[1]);
+      baseStat.HP += n;
+      return;
+    }
   });
 }
 
@@ -54,13 +67,25 @@ function abilityPower(character_level, ability, baseStat, noPerStat) {
     const effects = ability_value.split(",").map(e => e.trim());
     effects.forEach(effect => {
       let m;
-      // STR/DEX/INT/LUK N 증가
+      // STR/DEX/INT/LUK/ N 증가
       m = effect.match(/^(STR|DEX|INT|LUK)\s*(\d+)\s*증가/);
       if (m) {
         noPerStat[m[1]] += Number(m[2]);
         return;
       }
+      // 최대 HP N 증가
+      m = effect.match(/^최대 HP\s*(\d+)\s*증가/);
+      if (m) {
+        baseStat.HP += Number(m[1]);
+        return;
+      }
 
+      // 최대 HP N% 증가
+      m = effect.match(/^최대 HP\s*(\d+)% 증가/);
+      if (m) {
+        noPerStat.HP += Number(m[1]);
+        return;
+      }
       // 모든 능력치 N 증가
       m = effect.match(/^모든 능력치\s*(\d+)\s*증가/);
       if (m) {
@@ -132,6 +157,14 @@ function artifactPower(artifact, baseStat, noPerStat) {
       return;
     }
 
+    // 최대 HP N 증가
+    m = name.match(/최대 HP\s*(\d+)/);
+    if (m) {
+      const n = Number(m[1]);
+      baseStat.HP += n;
+      return;
+    }
+
     // 공격력 N, 마력 N 증가
     m = name.match(/^공격력\s*(\d+),\s*마력\s*(\d+)\s*증가/);
     if (m) {
@@ -175,6 +208,11 @@ function championPower(champion, baseStat, noPerStat) {
       baseStat.DEX += n;
       baseStat.INT += n;
       baseStat.LUK += n;
+    }
+
+    m = stat.match(/최대 HP\/MP\s*(\d+)/);
+    if (m) {
+      baseStat.HP += Number(m[1]);
     }
 
     // 공격력/마력 N 증가
@@ -269,6 +307,9 @@ function hyperStatPower(hyperStat, baseStat, noPerStat) {
     if (m) { noPerStat.INT += Number(m[1]); return; }
     m = stat_increase.match(/^운\s*(\d+)\s*증가/);
     if (m) { noPerStat.LUK += Number(m[1]); return; }
+    // 최대 HP N% 증가
+    m = stat_increase.match(/^최대 HP\s*([\d.]+)% 증가/);
+    if (m) { baseStat.HP += Number(m[1]); return; }
 
     // 크리티컬 데미지 N% 증가
     m = stat_increase.match(/^크리티컬 데미지\s*([\d.]+)% 증가/);
@@ -320,6 +361,7 @@ function symbolPower(symbol, character_class, baseStat, noPerStat) {
     DEX: "symbol_dex",
     INT: "symbol_int",
     LUK: "symbol_luk",
+    HP: "symbol_hp"
   };
   const statKey = statKeyMap[mainStat];
 
@@ -349,6 +391,10 @@ function unionPower(union, baseStat, noPerStat) {
         const n = Number(m[1]);
         baseStat.STR += n; baseStat.DEX += n; baseStat.LUK += n;
       }
+      m = effect.match(/최대 HP\s*([\d.]+)\s*증가/);
+      if (m) baseStat.HP += Number(m[1]);
+      m = effect.match(/최대 HP\s*([\d.]+)%\s*증가/);
+      if (m) noPerStat.HP += Number(m[1]);
       m = effect.match(/공격력\s*([\d.]+)\s*증가/);
       if (m) baseStat.atk += Number(m[1]);
       m = effect.match(/마력\s*([\d.]+)\s*증가/);
@@ -378,6 +424,8 @@ function unionPower(union, baseStat, noPerStat) {
       if (m) noPerStat.INT += Number(m[1]);
       m = effect.match(/LUK\s*([\d.]+)\s*증가/);
       if (m) noPerStat.LUK += Number(m[1]);
+      m = effect.match(/최대 HP\s*([\d.]+)\s*증가/);
+      if (m) noPerStat.HP += Number(m[1]);
       m = effect.match(/STR,\s*DEX,\s*LUK\s*([\d.]+)\s*증가/);
       if (m) {
         const n = Number(m[1]);
@@ -424,6 +472,8 @@ export function initcalPower(character){
     DEX: 4,
     INT: 4,
     LUK: 4,
+    pure_HP: 9,
+    HP: 0,
     atk: 0,
     magic: 0,
     damage: 0,
@@ -435,9 +485,9 @@ export function initcalPower(character){
     STR: 0,
     DEX: 0,
     INT: 0,
-    LUK: 0
+    LUK: 0,
+    HP: 0,
   };
-
   basicPower(character.level, character.class, baseStat, noPerStat);
   titlePower(character.title, baseStat, noPerStat);
   abilityPower(character.level, character.ability, baseStat, noPerStat);
@@ -449,6 +499,6 @@ export function initcalPower(character){
   symbolPower(character.symbol, character.class, baseStat, noPerStat);
   unionPower(character.union, baseStat, noPerStat);
   petPower(character.pet, baseStat, noPerStat);
-  
+
   return {baseStat, noPerStat};
 }

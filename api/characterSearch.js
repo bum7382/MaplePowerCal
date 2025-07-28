@@ -1,4 +1,5 @@
 // /api/characterSearch.js
+import { useToast } from "../utils/toastContext";
 
 // 요청 딜레이 함수
 function delay(ms) {
@@ -43,7 +44,7 @@ async function fetchWithLimit(requests, limit, delayMs) {
 
 export default async function handler(req, res) {
   const { name } = req.query;
-
+  const { showToast } = useToast();
   const API_URL = process.env.NEXON_OPEN_API_URL;
   const API_KEY = process.env.NEXON_OPEN_API;
 
@@ -155,7 +156,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("❌ API ERROR:", err);
+    showToast("API 호출에 있어 에러가 발생했습니다.", "error");
     res.status(500).json({ error: err.message });
   }
 }

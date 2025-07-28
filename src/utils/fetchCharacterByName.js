@@ -41,6 +41,7 @@ export async function fetchCharacterByName(name) {
 
     return mappedChar;
   } catch (err) {
+    console.log(err)
     return null;
   }
 }
