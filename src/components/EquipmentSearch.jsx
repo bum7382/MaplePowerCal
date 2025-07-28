@@ -8,25 +8,36 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
   const [results, setResults] = useState([]);
   const { showToast } = useToast();
 
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      if (query.length > 0) {
-        fetch(`https://maplestory.io/api/KMS/389/item/?searchFor=${encodeURIComponent(query)}`)
-          .then((res) => res.json())
-          .then((data) => {
-            setResults(data);
-          })
-          .catch((err) => {
-            console.error("검색 실패:", err);
-            setResults([]);
-          });
-      } else {
-        setResults([]);
-      }
-    }, 300);
+useEffect(() => {
+  const delayDebounce = setTimeout(() => {
+    if (query.length > 0) {
+      // 기존 문자열 검색
+      fetch(`https://maplestory.io/api/KMS/389/item/?searchFor=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then((data) => {
+          setResults(data);
+        })
+        .catch((err) => {
+          showToast("검색에 실패하였습니다.", "error");
+          setResults([]);
+        });
+    } else {
+      // 전체 장비 가져와서 subCategory 기준 필터
+      fetch("https://maplestory.io/api/KMS/389/item/category/equip")
+        .then(res => res.json())
+        .then((data) => {
+          setResults(data);
+        })
+        .catch((err) => {
+          showToast("장비 목록을 불러오는 데에 실패했습니다.", "error");
+          setResults([]);
+        });
+    }
+  }, 300);
 
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
+  return () => clearTimeout(delayDebounce);
+}, [query, slot]);
+
 
   function getBaseSlotName(slotName) {
     // "반지1" → "반지", "펜던트2" → "펜던트"
@@ -168,7 +179,7 @@ export default function EquipmentSearch({ slot, onSelectItem }) {
 
   const filteredResults = results.filter((item) => {
     const itemSlot = getSlotFromItem(item); // "반지", "펜던트", ...
-    return itemSlot === baseSlot;
+    return item.typeInfo?.overallCategory === "Equip" && item.isCash == false && itemSlot === baseSlot;
   });
 
   function handleItemSelect(itemId) {

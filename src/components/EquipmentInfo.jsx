@@ -187,7 +187,7 @@ export default function EquipmentInfo({
     const allowBySlot =
       commonStats.includes(key) ||
       (weaponOnly.includes(key) && weaponSlots.includes(slot)) ||
-      (armorOnly.includes(key) && !weaponSlots.includes(slot));
+      (armorOnly.includes(key) && !weaponSlots.includes(slot)) || slot === "뱃지";
 
     if (!allowBySlot) return null;
 
