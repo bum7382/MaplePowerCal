@@ -6,7 +6,7 @@ import { useToast } from "../utils/toastContext.jsx";
 import { initcalPower } from "../utils/initcalPower.js";
 import { getCachedCharacter, setCachedCharacter } from "../utils/charCache.js";
 
-export default function SearchModal({ onClose, onSearchStart, onSearchSuccess }) {
+export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, setLoading }) {
   const [inputValue, setInputValue] = useState("");
   const [recent, setRecent] = useState([]);
   const { showToast } = useToast();
@@ -47,6 +47,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess })
     const result = await fetchCharacterByName(inputValue.trim());
     if (!result || result?.error) {
       showToast("❌ 캐릭터를 찾을 수 없습니다.", "error");
+      if (setLoading) setLoading(false);
       return;
     }
 

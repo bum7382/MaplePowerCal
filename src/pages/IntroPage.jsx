@@ -156,6 +156,7 @@ export default function IntroPage() {
           onClose={() => setShowSearch(false)}
           onSearchStart={handleSearchStart}
           onSearchSuccess={handleSearchSuccess}
+          setLoading={setLoading}
         />
       )}
 

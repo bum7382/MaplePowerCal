@@ -193,10 +193,24 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
 
   // 주스탯, 부스탯
   const main = jobInfo.main_stat;
-  const sub = jobInfo.sub_stat;
-  
+  const subRaw = jobInfo.sub_stat;
+
+  // 주스탯
   const mainStat = baseStat[main] * ((100 + perStat[main]) / 100) + noPerStat[main];
-  const subStat = baseStat[sub] * ((100 + perStat[sub]) / 100) + noPerStat[sub]
+
+  // 부스탯 - 2개 이상인 경우 배열로 받음
+  let subStat = 0;
+  if (Array.isArray(subRaw)) {
+    const sum = subRaw.reduce((acc, key) => {
+      const base = baseStat[key] || 0;
+      const per = perStat[key] || 0;
+      const noPer = noPerStat[key] || 0;
+      return acc + (base * ((100 + per) / 100) + noPer);
+    }, 0);
+    subStat = sum / subRaw.length;
+  } else {
+    subStat = baseStat[subRaw] * ((100 + perStat[subRaw]) / 100) + noPerStat[subRaw];
+  }
   const finalStat = Math.floor((mainStat * 4 + subStat) / 100);
 
   const finalAtk = Math.floor((baseStat[isMagicClass ? "magic" : "atk"]) * ((100 + perStat[isMagicClass ? "magic" : "atk"]) / 100));

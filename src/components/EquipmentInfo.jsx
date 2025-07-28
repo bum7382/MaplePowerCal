@@ -6,6 +6,7 @@ import { calculatePower } from "@/utils/calculatePower";
 import OptionGroupEditor from "@/components/OptionGroupEditor";
 import useSoulOptions from "@/utils/useSoulOptions";
 import SoulOptionEditor from "@/components/SoulOptionEditor";
+import calculateStarforceStat from "../utils/calculateStarforceStat"
 
 // 등급별 색상
 const gradeColor = {
@@ -66,7 +67,7 @@ export default function EquipmentInfo({
   const [additionalGroup, setAdditionalGroup] = useState({ grade: item.additional_potential_option_grade || "없음", options: [] }); // 에디셔널 잠재옵션 그룹
 
   const noPotentialSlots = ["뱃지", "훈장", "포켓 아이템"]; // 잠재옵션 불가 슬롯
-  const isSeedRing = item.special_ring_level && item.special_ring_level !== 0;  // 시드링 여부
+  const isSeedRing = item.special_ring_level !== 0;  // 시드링 여부
   const cannotHavePotential = noPotentialSlots.includes(item.item_equipment_slot) || isSeedRing;  // 잠재옵션 불가
   
   // 소울 옵션 초깃값 설정
@@ -85,7 +86,6 @@ export default function EquipmentInfo({
     const valueMatch = item.soul_option?.match(/([0-9]+)/);
     return valueMatch ? valueMatch[1] : "";
   });
-
 
   // 장비 바뀌면 초기화
   useEffect(() => {
@@ -145,11 +145,25 @@ export default function EquipmentInfo({
             if (!editable) return;
             const next = i + 1 === current ? i : i + 1;
             setStarforce(next);
+
+            // 스타포스 변경 시 스탯 증가량
+            const bonus = calculateStarforceStat(character.class, item, next);
+            if(!bonus) return;
+            starforceOption.armor = bonus.armor.toString();
+            starforceOption.attack_power = bonus.attack.toString();
+            starforceOption.magic_power = bonus.magic.toString();
+            starforceOption.str = bonus.stat.toString();
+            starforceOption.luk = bonus.stat.toString();
+            starforceOption.int = bonus.stat.toString();
+            starforceOption.dex = bonus.stat.toString();
+            starforceOption.speed = bonus.speed.toString();
+            starforceOption.jump = bonus.jump.toString();
+            starforceOption.max_hp = bonus.max_hp.toString();
+            starforceOption.max_mp = bonus.max_mp.toString();
           }}
         />
       );
     }
-
     const rows = [];
     for (let i = 0; i < stars.length; i += 15) {
       const chunk = stars.slice(i, i + 15);
@@ -463,9 +477,13 @@ export default function EquipmentInfo({
       <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
 
       <div className="mb-2 text-center">
-        {!["칭호", "뱃지", "엠블렘", "보조무기"].includes(item.item_equipment_slot) && !isSeedRing &&
+        {!(["훈장", "뱃지", "엠블렘", "포켓 아이템"].includes(item.item_equipment_slot) ||
+          (item.item_equipment_slot === "보조무기" && character.class !== "듀얼블레이더")
+        ) && !isSeedRing &&
          renderStarforceGrid(starforce, +item.item_base_option.base_equipment_level)}
-        <p className="text-lg">{item.item_name}</p>
+        <p className="text-lg">
+          {item.item_name}
+        </p>
       </div>
 
       <div className="flex items-start">
