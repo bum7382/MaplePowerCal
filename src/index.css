@@ -9,9 +9,15 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
   cursor: url('/images/mouse/Cursor.png'), auto;
 }
+
+/* 스크롤바 */  
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #44B7CF; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #369EBC; }
 
 /* hover 커서 */
 button:hover, a:hover, input:hover, textarea:hover, select:hover, label:hover {

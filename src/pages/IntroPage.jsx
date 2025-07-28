@@ -69,7 +69,7 @@ export default function IntroPage() {
 
   return (
     <div
-      className="select-none drag-none relative w-screen h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+      className="select-none drag-none relative w-screen h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat "
       style={{ backgroundImage: 'url(/images/background.png)' }}
     >
       <div className="flex flex-col items-center mb-10">
