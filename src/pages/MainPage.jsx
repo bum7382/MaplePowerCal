@@ -58,7 +58,6 @@ export default function MainPage() {
   const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
   const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
 
-
   useEffect(() => {
     // localStorage에 튜토리얼 본 기록이 없으면 튜토리얼 띄움
     const hasSeen = localStorage.getItem("tutorialSeen");
@@ -89,7 +88,15 @@ export default function MainPage() {
     }
     setLoading(false);
   }, []);
+  
+  useEffect(() => {
+    if (!loading && !character) {
+      navigate("/");
+    }
+  }, [character, loading, navigate]);
 
+
+  
   // 장비 로드
   useEffect(() => {
     if (!character?.equipment) return;
@@ -255,7 +262,7 @@ export default function MainPage() {
     { name: "엠블렘", top: 320, left: 239 },
   ];
 
-  if (!character) return <div className="text-center mt-20">❌ 선택된 캐릭터가 없습니다.</div>;
+  //if (!character) return <div className="text-center mt-20">❌ 선택된 캐릭터가 없습니다.</div>;
 
   return (
     <div className="relative w-screen h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat select-none"
@@ -414,13 +421,13 @@ export default function MainPage() {
               }}
               onDoubleClick={() => {
               // 더블 클릭: 수정창 열기
-              setSelectedSlot(name);
-              setHoveredSlot(name);
-              const hasItem = !!equipment[name];
-              setInfoLocked(true);
-              setShowInfo(hasItem);
-              setShowSearch(!hasItem);
-            }}
+                setSelectedSlot(name);
+                setHoveredSlot(name);
+                const hasItem = !!equipment[name];
+                setInfoLocked(true);
+                setShowInfo(hasItem);
+                setShowSearch(!hasItem);
+              }}
               
             />
           </div>

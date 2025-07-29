@@ -1,6 +1,6 @@
 // frontend/src/pages/CahracterPage.jsx
 // 캐릭터 선택 컴포넌트
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SearchModal from "../components/SearchModal";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
