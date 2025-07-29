@@ -1,6 +1,4 @@
 // /api/characterSearch.js
-import { useToast } from "../utils/toastContext";
-
 // 요청 딜레이 함수
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -44,7 +42,6 @@ async function fetchWithLimit(requests, limit, delayMs) {
 
 export default async function handler(req, res) {
   const { name } = req.query;
-  const { showToast } = useToast();
   const API_URL = process.env.NEXON_OPEN_API_URL;
   const API_KEY = process.env.NEXON_OPEN_API;
 
@@ -87,6 +84,8 @@ export default async function handler(req, res) {
       () => fetchWithRetry(`${API_URL}/maplestory/v1/user/union-champion?ocid=${ocid}`, headers),
       // 13. 펫
       () => fetchWithRetry(`${API_URL}/maplestory/v1/character/pet-equipment?ocid=${ocid}`, headers),
+      // 14. 성향
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/propensity?ocid=${ocid}`, headers),
     ];
 
     // 5개씩 1.2초 대기하며 순차 실행 (limit, delayMs 값은 상황에 따라 조정 가능)
@@ -103,8 +102,8 @@ export default async function handler(req, res) {
       artifact,   // 11. 유니온 아티팩트
       champion,   // 12. 유니온 챔피언
       pet,        // 13. 펫
+      propensity  // 14. 성향
     ] = await fetchWithLimit(fetchFns, 5, 1200);
-
     // 결과 파싱 (원본과 동일)
     const combatPowerObj = stat.final_stat ? stat.final_stat.find(s => s.stat_name === "전투력") : null;
     const combatPower = combatPowerObj ? combatPowerObj.stat_value : null;
@@ -152,11 +151,11 @@ export default async function handler(req, res) {
         pet_1_equipment: pet.pet_1_equipment,
         pet_2_equipment: pet.pet_2_equipment,
         pet_3_equipment: pet.pet_3_equipment
-      }
+      },
+      willingness_level: propensity.willingness_level,
     });
 
   } catch (err) {
-    showToast("API 호출에 있어 에러가 발생했습니다.", "error");
     res.status(500).json({ error: err.message });
   }
 }

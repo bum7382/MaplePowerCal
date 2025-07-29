@@ -418,6 +418,7 @@ export default function EquipmentInfo({
       character.class,
       character.baseStat,
       character.noPerStat,
+      character.perStat,
       character.level
     );
     const scaledDiff = newPower - originalPower;
@@ -442,6 +443,7 @@ export default function EquipmentInfo({
     character.class,
     character.baseStat,
     character.noPerStat,
+    character.perStat,
     character.level
   );
 
@@ -450,6 +452,7 @@ export default function EquipmentInfo({
     character.class,
     character.baseStat,
     character.noPerStat,
+    character.perStat,
     character.level
   );
 

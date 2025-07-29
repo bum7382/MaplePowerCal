@@ -130,7 +130,13 @@ export default function MainPage() {
   useEffect(() => {
     if (initDone) return;
     if (!character || Object.keys(equipment).length === 0) return;
-    const basePower = calculatePower(Object.values(equipment), character.class, character.baseStat, character.noPerStat, character.level);
+    const basePower = calculatePower(
+      Object.values(equipment), 
+      character.class, 
+      character.baseStat, 
+      character.noPerStat, 
+      character.perStat,
+      character.level);
     setOriginalPower(basePower);
     setInitDone(true);
   }, [character, equipment, initDone]);
@@ -165,6 +171,7 @@ export default function MainPage() {
       character.class,
       character.baseStat,
       character.noPerStat,
+      character.perStat,
       character.level
     );
     setPowerDiff(newPower - originalPower);
@@ -202,12 +209,15 @@ export default function MainPage() {
       }
       removeCachedCharacter(character.name);  // 캐시 삭제
       setCachedCharacter(character.name, result); // 캐시 새로 저장
+      setCharacter(result);
+      
       // 전투력 재계산
       const basePower = calculatePower(
         result.equipment, 
         result.class,
         result.baseStat,
         result.noPerStat,
+        result.perStat,
         result.level
       );
       setOriginalPower(basePower);
@@ -378,6 +388,7 @@ export default function MainPage() {
                     character.class,
                     character.baseStat,
                     character.noPerStat,
+                    character.perStat,
                     character.level
                   ) - originalPower);
                   setShowInfo(false);
@@ -448,6 +459,7 @@ export default function MainPage() {
                   character.class,
                   character.baseStat,
                   character.noPerStat,
+                  character.perStat,
                   character.level
                 );
                 setPowerDiff(newPower - originalPower);
@@ -514,6 +526,7 @@ export default function MainPage() {
                   character.class,
                   character.baseStat,
                   character.noPerStat,
+                  character.perStat,
                   character.level
                 );
                 setPowerDiff(newPower - originalPower);
@@ -622,6 +635,7 @@ export default function MainPage() {
               character.class,
               character.baseStat,
               character.noPerStat,
+              character.perStat,
               character.level
             );
             setPowerDiff(newPower - originalPower);

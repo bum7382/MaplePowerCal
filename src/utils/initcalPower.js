@@ -54,7 +54,7 @@ function titlePower(title, baseStat, noPerStat) {
     m = effect.match(/^최대 HP\/최대 MP\s*\+?(\d+)/);
     if (m) {
       const n = Number(m[1]);
-      baseStat.HP += n;
+      baseStat.HP += n/2;
       return;
     }
   });
@@ -294,7 +294,7 @@ function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
 }
 
 // 6. 하이퍼 스탯
-function hyperStatPower(hyperStat, baseStat, noPerStat) {
+function hyperStatPower(hyperStat, baseStat, noPerStat, perStat) {
   hyperStat.forEach(({ stat_increase }) => {
     if (!stat_increase) return;
     let m;
@@ -309,7 +309,7 @@ function hyperStatPower(hyperStat, baseStat, noPerStat) {
     if (m) { noPerStat.LUK += Number(m[1]); return; }
     // 최대 HP N% 증가
     m = stat_increase.match(/^최대 HP\s*([\d.]+)% 증가/);
-    if (m) { baseStat.HP += Number(m[1]); return; }
+    if (m) { perStat.HP += Number(m[1]); return; }
 
     // 크리티컬 데미지 N% 증가
     m = stat_increase.match(/^크리티컬 데미지\s*([\d.]+)% 증가/);
@@ -374,7 +374,7 @@ function symbolPower(symbol, character_class, baseStat, noPerStat) {
 }
 
 // 9. 유니온
-function unionPower(union, baseStat, noPerStat) {
+function unionPower(union, baseStat, noPerStat, perStat) {
   if (union.union_occupied) {
     union.union_occupied.forEach(effect => {
       let m;
@@ -393,8 +393,7 @@ function unionPower(union, baseStat, noPerStat) {
       }
       m = effect.match(/최대 HP\s*([\d.]+)\s*증가/);
       if (m) baseStat.HP += Number(m[1]);
-      m = effect.match(/최대 HP\s*([\d.]+)%\s*증가/);
-      if (m) noPerStat.HP += Number(m[1]);
+    
       m = effect.match(/공격력\s*([\d.]+)\s*증가/);
       if (m) baseStat.atk += Number(m[1]);
       m = effect.match(/마력\s*([\d.]+)\s*증가/);
@@ -426,6 +425,8 @@ function unionPower(union, baseStat, noPerStat) {
       if (m) noPerStat.LUK += Number(m[1]);
       m = effect.match(/최대 HP\s*([\d.]+)\s*증가/);
       if (m) noPerStat.HP += Number(m[1]);
+      m = effect.match(/최대 HP\s*([\d.]+)%\s*증가/);
+      if (m) perStat.HP += Number(m[1]);
       m = effect.match(/STR,\s*DEX,\s*LUK\s*([\d.]+)\s*증가/);
       if (m) {
         const n = Number(m[1]);
@@ -465,6 +466,10 @@ function petPower(pet, baseStat, noPerStat){
   }
 }
 
+// 11. 성향 의지
+function willingnessPower(willingness_level, baseStat){
+  baseStat.HP += Math.floor(willingness_level / 5) * 100;
+}
 
 export function initcalPower(character){
   const baseStat = {
@@ -488,17 +493,27 @@ export function initcalPower(character){
     LUK: 0,
     HP: 0,
   };
+
+  const perStat = {
+    STR: 0,
+    DEX: 0,
+    INT: 0,
+    LUK: 0,
+    atk: 0,
+    magic: 0,
+    HP: 0
+  };
   basicPower(character.level, character.class, baseStat, noPerStat);
   titlePower(character.title, baseStat, noPerStat);
   abilityPower(character.level, character.ability, baseStat, noPerStat);
   artifactPower(character.artifact, baseStat, noPerStat);
   championPower(character.champion, baseStat, noPerStat);
   hexaStatPower(character.hexa_stat, character.class, baseStat, noPerStat);
-  hyperStatPower(character.hyperStat, baseStat, noPerStat);
+  hyperStatPower(character.hyperStat, baseStat, noPerStat, perStat);
   skillPower(character.skill, baseStat, noPerStat);
   symbolPower(character.symbol, character.class, baseStat, noPerStat);
-  unionPower(character.union, baseStat, noPerStat);
+  unionPower(character.union, baseStat, noPerStat, perStat);
   petPower(character.pet, baseStat, noPerStat);
-
-  return {baseStat, noPerStat};
+  willingnessPower(character.willingness_level, baseStat)
+  return {baseStat, noPerStat, perStat};
 }

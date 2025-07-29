@@ -11,20 +11,35 @@ function buildTemplateRegex(template) {
   return new RegExp(`^${pattern}$`);
 }
 
+function conversionStarforce(count){
+  if(count <= 60) return count * 80;
+  else if(count <= 100) return count * 100;
+  else if(count <= 140) return count * 120;
+  else if(count <= 200) return count * 140;
+  else if(count <= 220) return count * 142;
+  else if(count <= 250) return count * 144;
+  else if(count <= 270) return count * 146;
+  else if(count <= 290) return count * 148;
+  else if(count <= 310) return count * 150;
+  else if(count <= 320) return count * 152;
+  else if(count <= 330) return count * 154;
+  else if(count <= 340) return count * 156;
+  else if(count <= 350) return count * 158;
+  else if(count <= 360) return count * 160;
+  else if(count <= 370) return count * 162;
+  else if(count <= 380) return count * 164;
+  else if(count <= 390) return count * 166;
+  else if(count <= 400) return count * 168;
+  else return count * 170;
+}
 
-export function calculatePower(equipments, character_class, initialStat, noPerStat, character_level = 0) {
+export function calculatePower(equipments, character_class, initialStat, noPerStat, initPerStat, character_level = 0) {
   const jobInfo = jobStat.find(j => j.class === character_class);
   if (!jobInfo) return 0;
+
   const baseStat = { ...initialStat };
-  const perStat = {
-    STR: 0,
-    DEX: 0,
-    INT: 0,
-    LUK: 0,
-    atk: 0,
-    magic: 0,
-    HP: 0
-  };
+  const perStat = {...initPerStat };
+
   // 주스탯이 INT일 경우 공격력이 아닌 마력 사용
   const isMagicClass = jobInfo.main_stat === "INT";
   const statKeys = ["STR", "DEX", "INT", "LUK"];
@@ -39,7 +54,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
 
   // 스타포스 별 개수
   let starCount = 0;
-
+  //console.dir(baseStat);
   // 현재 장착 중인 장비의 전체 옵션 계산
   for (const eq of equipments) {
     const base = eq.item_base_option || {}; // 기본값
@@ -53,10 +68,14 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     }
     // 추옵 계산
     // 기본 스탯 값 계산
-    for (let stat of ["str", "dex", "int", "luk", "hp"]) {
-      const key = stat.toUpperCase();
-      baseStat[key] +=
-        +(base[stat] || 0) + +(add[stat] || 0) + +(etc[stat] || 0) + +(star[stat] || 0);
+    for (let stat of ["str", "dex", "int", "luk", "max_hp"]) {
+      let key = "";
+      let value = 0;
+      if (stat === "max_hp") key = "HP";
+      else key = stat.toUpperCase();
+      value = +(base[stat] || 0) + +(add[stat] || 0) + +(etc[stat] || 0) + +(star[stat] || 0);
+      if(stat === "max_hp") baseStat[key] += value / 2;
+      else baseStat[key] += value;
     }
     // 올스탯 %
     const allPercent = +(base.all_stat || 0) + +(add.all_stat || 0) + +(etc.all_stat || 0) + +(star.all_stat || 0);
@@ -99,7 +118,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
           else if (id == 9) baseStat.LUK += val;
           else if (id == 10) baseStat.DEX += val;
           else if (id == 11) baseStat.INT += val;
-          else if (id == 14) baseStat.HP += val;
+          else if (id == 14) baseStat.HP += val / 2;
           else if (id == 6) baseStat.atk += val;
           else if (id == 7) baseStat.magic += val;
         }
@@ -161,7 +180,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
         else if (id == 20) baseStat.LUK += val;  // LUK
         else if (id == 21) baseStat.DEX += val;  // DEX
         else if (id == 22) baseStat.INT += val;  // INT
-        else if (id == 29) baseStat.HP += val;   // HP
+        else if (id == 29) baseStat.HP += val / 2;   // HP
 
         else if (id == 17) baseStat.atk += val; // 공격력
         else if (id == 18) baseStat.magic += val;  // 마력
@@ -172,7 +191,18 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     Object.entries(setEffect).forEach(([setName, data]) => {
       const items = data.setItems || [];
       const matchList = data.match || [];
-      if (items.includes(eq.item_name) || matchList.some(keyword => eq.item_name?.includes(keyword))) {
+      let isMatch = false;
+      if (setName === "마이스터 세트") {
+        // 마이스터 세트만 "마이스터"로 시작하는 아이템만 세트로 포함
+        isMatch = items.includes(eq.item_name) ||
+                  matchList.some(keyword => eq.item_name?.startsWith(keyword));
+      } else {
+        // 나머지는 기존처럼 글자만 포함해도 세트로 포함
+        isMatch = items.includes(eq.item_name) ||
+                  matchList.some(keyword => eq.item_name?.includes(keyword));
+      }
+
+      if (isMatch) {
         setCountMap[setName] = (setCountMap[setName] || 0) + 1;
       }
     });
@@ -193,10 +223,17 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
         else if (key === "마력") baseStat.magic += v;
         else if (key === "보스몬스터데미지") baseStat.boss_damage += v;
         else if (key === "올스탯") {
-          for (let s of ["STR", "DEX", "INT", "LUK", "HP"]) baseStat[s] += v;
+          for (let s of ["STR", "DEX", "INT", "LUK"]) baseStat[s] += v;
         }
-        else if(key === "주스탯") baseStat[jobInfo.main_stat] += v;
-        else if(key === "부스탯") baseStat[jobInfo.sub_stat] += v;
+        else if (key === "최대HP") baseStat.HP += v / 2;
+        else if (key === "최대HP%") perStat.HP += v;
+        else if(key === "주스탯"){ 
+          if(jobInfo.main_stat == "HP") baseStat.STR += v;
+          else baseStat[jobInfo.main_stat] += v;
+        }
+        else if(key === "부스탯") 
+          if(jobInfo.main_stat == "HP") {baseStat.DEX += v;}
+          else baseStat[jobInfo.sub_stat] += v;
         else if (key === "크리티컬데미지") baseStat.crit_damage += v;
       }
     }
@@ -210,12 +247,14 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
   let finalStat = 0;
 
   if (character_class === "데몬어벤져") {
-    baseStat.pure_HP += starCount * 140;
-    const maxHP = baseStat.pure_HP + Math.floor((baseStat.pure_HP * (1+perStat.HP/100))/2)
-              + Math.floor((baseStat.pure_HP + baseStat.HP) * (1+perStat.HP/100)/2)
-              + noPerStat.HP
-    subStat = baseStat[subRaw] * (100 + perStat[subRaw] / 100) + noPerStat[subRaw];
-    finalStat = Math.floor((maxHP/3.5 + 0.8 * noPerStat.HP / 3.5 + subStat) * 0.01);
+    // pure_HP: 레벨로 증가한 HP
+    // HP: 내실 + 장비 등으로 증가한 HP
+    baseStat.HP += conversionStarforce(starCount);
+    const maxHP = (baseStat.HP) * (1 + perStat.HP/100) + noPerStat.HP;
+    subStat = Math.floor(baseStat[subRaw] * (1 + perStat[subRaw]/100)) + noPerStat[subRaw];
+    finalStat = Math.floor((Math.floor(baseStat.pure_HP / 3.5) 
+              + (0.8 * Math.floor(maxHP / 3.5) + subStat)) 
+              * 0.01)
   } else if (Array.isArray(main)) {
     // 제논
     const totalMain = main.reduce((sum, key) => {
@@ -251,7 +290,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
   const finalCrit = (135 + baseStat.crit_damage) / 100;
   const power = Math.floor(finalStat * finalAtk * finalDmg * finalCrit * finalDamage);
   
-  
+  /*
   console.log("전투력 계산:", {
     initialStat,
     baseStat,
@@ -264,7 +303,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     finalDmg,
     finalCrit,
     power
-  });
+  });*/
   
   
   return isNaN(power) ? 0 : power;

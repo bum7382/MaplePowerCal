@@ -23,10 +23,11 @@ export async function fetchCharacterByName(name) {
       union: result.union,            // 유니온
       artifact: result.artifact,      // 아티팩트
       champion: result.champion,      // 유니온 챔피언
-      pet: result.pet                 // 펫 장비
+      pet: result.pet,                 // 펫 장비
+      willingness_level: result.willingness_level   // 성향 의지 레벨
     }
 
-    const { baseStat, noPerStat } = initcalPower(basicPowerChar);
+    const { baseStat, noPerStat, perStat } = initcalPower(basicPowerChar);
 
     const mappedChar = {
       name: result.character_name,    // 캐릭터 이름
@@ -37,6 +38,7 @@ export async function fetchCharacterByName(name) {
       equipment: result.item,         // 장비
       baseStat: baseStat,             // 기본 스탯
       noPerStat: noPerStat,           // % 미적용 스탯
+      perStat: perStat,               // % 스탯
     };
 
     return mappedChar;
