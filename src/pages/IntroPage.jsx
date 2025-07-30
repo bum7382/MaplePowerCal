@@ -7,13 +7,26 @@ import Loading from "../components/Loading";
 import { getCachedCharacter, setCachedCharacter } from "../utils/charCache";
 import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
 import { useToast } from "../utils/toastContext";
+import NoticeModal from "../components/NoticeModal.jsx";
 
 export default function IntroPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  // 공지 상태
+  const [notices, setNotices] = useState([]);
+  const [notice, setNotice] = useState(false);
+
+  // 공지 가지고 오기
+  useEffect(() => {
+    fetch("/data/notices.json")
+      .then(res => res.json())
+      .then(data => setNotices(data.reverse()));
+  }, []);
 
   // 마운트 시 localStorage에서 즐겨찾기 불러오기
   useEffect(() => {
@@ -67,11 +80,29 @@ export default function IntroPage() {
     }
   };
 
+
   return (
     <div
       className="select-none drag-none relative w-screen h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat "
-      style={{ backgroundImage: 'url(/images/background.png)' }}
-    >
+      style={{ backgroundImage: 'url(/images/background.png)' }}>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 mt-4 z-50">
+        <div className="
+          bg-[#1F2735] bg-opacity-60 font-galmuri text-white rounded-[10px] flex flex-row items-center px-4 py-2 shadow-md
+          max-w-[90vw] w-fit min-w-[200px] max-sm:px-2 max-sm:py-1"
+          onClick={() => {
+            setNotice(true);
+          }}>
+          <img src="/images/icons/확성기.png"
+            className="w-7 h-7 mr-2 max-sm:w-5 max-sm:h-5"
+            alt="확성기"
+            draggable={false}
+          />
+          <span className="text-base max-sm:text-xs whitespace-pre-line">
+            {notices.length > 0 ? notices[0].title : "공지사항입니다."}
+          </span>
+        </div>
+      </div>
+
       <div className="flex flex-col items-center mb-10
                       max-sm:mb-1">
         <img
@@ -161,6 +192,10 @@ export default function IntroPage() {
       )}
 
       {loading && <Loading visible={true} />}
+      
+      {notice && notices.length > 0 && (
+        <NoticeModal onClose={() => setNotice(false)} notices={notices} />
+      )}
     </div>
   );
 }
