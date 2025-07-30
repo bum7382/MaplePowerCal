@@ -377,7 +377,7 @@ export default function EquipmentInfo({
     // 수정한 장비로 업데이트
     const updated = {
       ...equipment[slot],
-      price: Number(price),
+      //price: Number(price),
       soul_option: soulTemplate
         ? soulTemplate.template.replace("{value}", soulValue)
         : null,
@@ -505,11 +505,11 @@ export default function EquipmentInfo({
               ? "현재 장착 중인 장비"
               : `${diff === 0 ? "" : diff > 0 ? "+" : "-"}${formatKoreanNumber(Math.abs(diff))}`}
           </p>
-          {diff > 0 && price !== "0" && Number(price) !== 0 && (
-          <div className="mt-3 text-s text-white font-galmuri text-right">
+          {/*diff > 0 && price !== "0" && Number(price) !== 0 && (
+          {<div className="mt-3 text-s text-white font-galmuri text-right">
             1억 메소당 전투력 +{((diff / Number(price)) * 100000000).toFixed(2)}
-          </div>
-        )}
+          </div>}
+        )*/}
 
         </div>
       </div>
@@ -592,7 +592,7 @@ export default function EquipmentInfo({
 
       {editable && (
         <div className="mt-4">
-          <div className="text-sm text-yellow-500 flex items-center mb-1">
+          {/*<div className="text-sm text-yellow-500 flex items-center mb-1">
             <img src="/images/icons/meso.png" alt="메소" className="w-3 mr-2" />
             가격 (메소)
           </div>
@@ -605,7 +605,7 @@ export default function EquipmentInfo({
               setPrice(trimmed);
             }}
             className="w-full border px-2 py-1 rounded text-sm mt-1 text-black"
-          />
+          />*/}
           <button onClick={handleSaveClick} className="mt-3 w-full py-2 bg-blue-500 hover:bg-blue-600 rounded text-sm text-white">
             저장
           </button>

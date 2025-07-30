@@ -263,13 +263,13 @@ export default function MainPage() {
 
   const slotStyle = "absolute w-[48px] h-[48px] bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
   const slots = [
-    ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 8.6 })),
-    ...["눈장식", "귀고리", "펜던트", "펜던트2", "얼굴장식"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 20.8 })),
-    ...["모자", "상의", "하의", "어깨장식"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 69.6 })),
-    ...["망토", "장갑", "신발", "훈장", "기계 심장", "뱃지"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 81.9 })),
-    { name: "무기", top: 63.8, left: 33 },
-    { name: "보조무기", top: 63.8, left: 45.3 },
-    { name: "엠블렘", top: 63.8, left: 57.53 },
+    ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 7.9 })),
+    ...["눈장식", "귀고리", "펜던트", "펜던트2", "얼굴장식"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 20.1 })),
+    ...["모자", "상의", "하의", "어깨장식"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 69 })),
+    ...["망토", "장갑", "신발", "훈장", "기계 심장", "뱃지"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 81.2 })),
+    { name: "무기", top: 63.2, left: 32.3 },
+    { name: "보조무기", top: 63.2, left: 44.5},
+    { name: "엠블렘", top: 63.2, left: 56.8 },
   ];
 
   return (
@@ -318,7 +318,7 @@ export default function MainPage() {
             {/* 캐릭터 이미지 & 이름 */}
           <img src={character?.image || "/images/default_character.png"} 
                draggable="false" 
-               className="w-[136%] max-w-none max-sm:w-full" 
+               className="w-[7vw] max-w-none max-sm:w-full" 
                onMouseEnter={() => setShowCalPower(true)}
                onMouseLeave={() => setShowCalPower(false)}
           />
@@ -358,7 +358,7 @@ export default function MainPage() {
           <div
             key={name}
             style={{ top: `${top}%`, left: `${left}%` }}
-            className={`absolute aspect-square w-[9.5%] flex items-center justify-center transition-all duration-150
+            className={`absolute aspect-square w-[11%] flex items-center justify-center transition-all duration-150
               ${selectedSlot === name ? "ring-2 ring-[#44B7CF] ring-offset-2 shadow-md rounded" : ""}`}
             onMouseEnter={() => {
               if (!isInfoLocked && equipment[name]) {
@@ -385,7 +385,7 @@ export default function MainPage() {
                 src={equipment[name].item_icon}
                 alt={equipment[name].item_name}
                 draggable="false"
-                className="w-[90%] object-contain p-1 z-10 pointer-events-none"
+                className="w-[80%] object-contain p-1 z-10 pointer-events-none"
               />
             )}
 
@@ -515,8 +515,10 @@ export default function MainPage() {
                 const item = equipment[selectedSlot];
 
                 const isDuplicate = inventory.some((inv) =>
-                  JSON.stringify({ ...inv, price: undefined, uuid: undefined }) ===
-                  JSON.stringify({ ...item, price: undefined, uuid: undefined })
+                 // JSON.stringify({ ...inv, price: undefined, uuid: undefined }) ===
+                 // JSON.stringify({ ...item, price: undefined, uuid: undefined })
+                 JSON.stringify({ ...inv, uuid: undefined }) ===
+                 JSON.stringify({ ...item, uuid: undefined })
                 );
                 if (!isDuplicate) {
                   const newItem = { ...item, uuid: uuidv4() };

@@ -92,10 +92,10 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     baseStat.magic += +(base.magic_power || 0) + +(add.magic_power || 0) + +(etc.magic_power || 0) + +(star.magic_power || 0);
 
     // 보스 데미지 계산
-    baseStat.boss_damage += +(base.boss_damage || 0) + +(add.boss_damage || 0);
+    baseStat.boss_damage += +(base.boss_damage || 0) + +(add.boss_damage || 0) + +(etc.boss_damage || 0) + +(star.boss_damage || 0);
 
     // 데미지 계산
-    baseStat.damage += +(base.damage || 0) + +(add.damage || 0)
+    baseStat.damage += +(base.damage || 0) + + +(add.damage || 0) + +(etc.damage || 0) + +(star.damage || 0);
     // 소울 옵션이 있을 경우 계산
     if (eq.soul_option) {
       const match = soulOptions.find(opt => {
@@ -290,7 +290,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
   const finalCrit = (135 + baseStat.crit_damage) / 100;
   const power = Math.floor(finalStat * finalAtk * finalDmg * finalCrit * finalDamage);
   
-  /*
+  
   console.log("전투력 계산:", {
     initialStat,
     baseStat,
@@ -303,7 +303,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     finalDmg,
     finalCrit,
     power
-  });*/
+  });
   
   
   return isNaN(power) ? 0 : power;
