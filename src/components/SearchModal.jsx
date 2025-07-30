@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
 import { useToast } from "../utils/toastContext.jsx";
-import { initcalPower } from "../utils/initcalPower.js";
 import { getCachedCharacter, setCachedCharacter } from "../utils/charCache.js";
 
 export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, setLoading }) {
@@ -73,7 +72,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
           <img
             src="/images/logo.png"
             alt="메이플 스펙업 효율 계산기"
-            className="w-70 h-auto mb-4 drop-shadow-xl"
+            className="w-70 h-auto mb-4 drop-shadow-xl max-sm:w-[200px] max-sm:-mb-4"
           />
         </div>
 
@@ -89,7 +88,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
           <button
             type="button"
             onClick={() => handleSearch()}
-            className="bg-[#44B7CF] text-white px-6 text-sm font-galmuri hover:bg-[#369EBC]"
+            className="bg-[#44B7CF] text-white px-6 text-sm font-galmuri hover:bg-[#369EBC] max-sm:px-4"
           >
             검색
           </button>

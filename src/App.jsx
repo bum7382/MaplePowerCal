@@ -21,7 +21,7 @@ function App() {
     }
   }, []);
 
-  if (isMobile) {
+  if (false) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 text-white text-[1rem] font-galmuri">
         <img src="/images/황당.png" className="w-[30%]"></img>

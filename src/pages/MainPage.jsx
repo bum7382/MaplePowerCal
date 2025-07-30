@@ -1,5 +1,5 @@
 // src/pages/MainPage.jsx
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import EquipmentInfo from "../components/EquipmentInfo.jsx";
 import { calculatePower } from "../utils/calculatePower";
 import BasicStatModal from "../components/BasicStatModal";
@@ -14,6 +14,7 @@ import { fetchCharacterByName } from "../utils/fetchCharacterByName.js";
 import Loading from "../components/Loading";
 import { v4 as uuidv4 } from 'uuid';
 import { getCachedCharacter, setCachedCharacter, removeCachedCharacter } from "../utils/charCache";
+import TutorialMobile from "../components/TutorialMobile.jsx";
 
 
 export default function MainPage() {
@@ -58,6 +59,14 @@ export default function MainPage() {
   const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
   const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
 
+  const [isMobile, setIsMobile] = useState(false);  // 모바일 여부
+  
+  useEffect(() => {
+      if (/iPhone|iPad|iPod|Android/i.test(window.navigator.userAgent)) {
+        setIsMobile(true);
+      }
+    }, []);
+
   useEffect(() => {
     // localStorage에 튜토리얼 본 기록이 없으면 튜토리얼 띄움
     const hasSeen = localStorage.getItem("tutorialSeen");
@@ -65,6 +74,7 @@ export default function MainPage() {
   }, []);
 
   const handleTutorialOpen = () => setShowTutorial(true);
+
   const handleTutorialClose = () => {
     setShowTutorial(false);
     localStorage.setItem("tutorialSeen", "true");
@@ -253,41 +263,42 @@ export default function MainPage() {
 
   const slotStyle = "absolute w-[48px] h-[48px] bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
   const slots = [
-    ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 115 + i * 51, left: 34 })),
-    ...["눈장식", "귀고리", "펜던트", "펜던트2", "얼굴장식"].map((name, i) => ({ name, top: 115 + i * 51, left: 85 })),
-    ...["모자", "상의", "하의", "어깨장식"].map((name, i) => ({ name, top: 115 + i * 51, left: 291 })),
-    ...["망토", "장갑", "신발", "훈장", "기계 심장", "뱃지"].map((name, i) => ({ name, top: 115 + i * 51, left: 342 })),
-    { name: "무기", top: 320, left: 137 },
-    { name: "보조무기", top: 320, left: 188 },
-    { name: "엠블렘", top: 320, left: 239 },
+    ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 8.6 })),
+    ...["눈장식", "귀고리", "펜던트", "펜던트2", "얼굴장식"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 20.8 })),
+    ...["모자", "상의", "하의", "어깨장식"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 69.6 })),
+    ...["망토", "장갑", "신발", "훈장", "기계 심장", "뱃지"].map((name, i) => ({ name, top: 23.6 + i * 10, left: 81.9 })),
+    { name: "무기", top: 63.8, left: 33 },
+    { name: "보조무기", top: 63.8, left: 45.3 },
+    { name: "엠블렘", top: 63.8, left: 57.53 },
   ];
-
-  //if (!character) return <div className="text-center mt-20">❌ 선택된 캐릭터가 없습니다.</div>;
 
   return (
     <div className="relative w-screen h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat select-none"
          style={{ backgroundImage: "url(/images/background_blur.png)" }}>
-      <div className="relative w-[420px] aspect-[420/509] ">
+      <div className="relative w-[420px] aspect-[420/509] max-sm:w-[90%]">
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
-        <img src="/images/inventory/equipmentUI.png" draggable="false" className="absolute top-[70px] left-[17px] w-[390px]" />
-        <button
-          onClick = {handleTutorialOpen}>
-          <img src="/images/tutorial/정보창.png" 
-               draggable="false" 
-               title="튜토리얼" 
-               className="absolute top-[25px] right-[7px] w-[30px] active:brightness-75 hover:brightness-125 transition">
-          </img>
+        <img src="/images/inventory/equipmentUI.png" draggable="false" className="absolute top-[14%] left-[3.6%] w-[92.8%]" />
+        <button onClick={handleTutorialOpen}>
+            <img
+              src="/images/tutorial/정보창.png"
+              draggable="false"
+              title="튜토리얼"
+              className="absolute top-[5%] right-[2%] w-[7%] active:brightness-75 hover:brightness-125 transition"
+            />
         </button>
         <button
           onClick = {handleRefresh}
-          className="absolute top-[25px] right-[42px] bg-[#1F2735] bg-opacity-60 w-[85px] h-[30px] rounded text-[13px]
-          font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center" 
+          className="absolute top-[5%] right-[10%] bg-[#1F2735] bg-opacity-60 w-[85px] h-[30px] rounded text-[13px]
+          font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center
+          max-sm:w-[75px] max-sm:h-[25px] max-sm:text-[10px]" 
           >
           정보 갱신
         </button>
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
-          <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-60 px-4 py-1 rounded">
-            <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2]">
+          <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-60 px-4 py-1 rounded
+                          max-sm:w-[300px]">
+            <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2] 
+                            max-sm:-top-[23px] max-sm:left-[35%] max-sm:text-center max-sm:text-black">
               전투력 증가량:
             </span>
             <span
@@ -302,26 +313,27 @@ export default function MainPage() {
           </div>
         </div>
         
-        <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[454px] left-[14px] w-[172px] h-[22px]" />
-        <div draggable="false" className="absolute top-[150px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
+        <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[88%] left-[4%] w-[40%]" />
+        <div draggable="false" className="absolute top-[29%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center max-sm:top-[30%]">
             {/* 캐릭터 이미지 & 이름 */}
           <img src={character?.image || "/images/default_character.png"} 
                draggable="false" 
-               className="w-[130px]" 
+               className="w-[136%] max-w-none max-sm:w-full" 
                onMouseEnter={() => setShowCalPower(true)}
                onMouseLeave={() => setShowCalPower(false)}
           />
           {/* 툴팁 */}
           {showCalPower && (
-            <div className="absolute bottom-[196px] left-1/2 -translate-x-1/2 ml-2 px-3 py-1 bg-[#1F2735] bg-opacity-60 text-white 
+            <div className="absolute bottom-[125%] left-1/2 -translate-x-1/2 ml-2 px-3 py-1 bg-[#1F2735] bg-opacity-60 text-white 
             text-xs rounded shadow-lg whitespace-nowrap z-20 font-galmuri text-center">
               계산된 기본 전투력: {formatKoreanNumber(originalPower) || "0"} <br />
               원본 전투력: {formatKoreanNumber(character.power) || "0"}
             </div>
           )}
           <div className="flex flex-row items-center space-x-1">
-            <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-galmuri relative -top-[5px]">
-            {character?.name || "이름없음"}
+            <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-galmuri relative -top-[5px]
+                            max-sm:text-[9px] max-sm:py-[0.01px]">
+              {character?.name || "이름없음"}
             </span>
             <button 
               onClick = {handleFavoriteClick}
@@ -336,7 +348,8 @@ export default function MainPage() {
           </div>
         </div>
         <button
-          className="absolute top-[380px] left-[170px] px-4 py-2 bg-[#44B7CF] text-white text-sm font-galmuri rounded hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50"
+          className="absolute top-[75%] left-[40%] px-4 py-2 bg-[#44B7CF] text-white items-center text-[80%] font-galmuri rounded hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50
+                    max-sm:text-[10px] max-sm:top-[80%] max-sm:px-3 max-sm:py-1"
           onClick={() => navigate("/")}
         >
           처음으로
@@ -344,8 +357,8 @@ export default function MainPage() {
         {slots.map(({ name, top, left }) => (
           <div
             key={name}
-            style={{ top: `${top}px`, left: `${left}px` }}
-            className={`absolute w-[48px] h-[48px] flex items-center justify-center transition-all duration-150
+            style={{ top: `${top}%`, left: `${left}%` }}
+            className={`absolute aspect-square w-[9.5%] flex items-center justify-center transition-all duration-150
               ${selectedSlot === name ? "ring-2 ring-[#44B7CF] ring-offset-2 shadow-md rounded" : ""}`}
             onMouseEnter={() => {
               if (!isInfoLocked && equipment[name]) {
@@ -354,7 +367,7 @@ export default function MainPage() {
               }
             }}
             onMouseLeave={() => {
-              if (!isInfoLocked) {
+              if (!isInfoLocked && !isMobile) {
                 setShowInfo(false);
                 setHoveredSlot(null);
               }
@@ -372,7 +385,7 @@ export default function MainPage() {
                 src={equipment[name].item_icon}
                 alt={equipment[name].item_name}
                 draggable="false"
-                className="w-[36px] object-contain p-1 z-10 pointer-events-none"
+                className="w-[90%] object-contain p-1 z-10 pointer-events-none"
               />
             )}
 
@@ -428,17 +441,33 @@ export default function MainPage() {
                 setShowInfo(hasItem);
                 setShowSearch(!hasItem);
               }}
-              
+              onTouchStart={() => {
+                const now = Date.now();
+                if (now - lastTouch < 300) {
+                  setSelectedSlot(name);
+                  setHoveredSlot(name);
+                  const hasItem = !!equipment[name];
+                  setInfoLocked(true);
+                  setShowInfo(hasItem);
+                  setShowSearch(!hasItem);
+                  lastTouch = 0;
+                } else {
+                  setSelectedSlot(name);
+                  setHoveredSlot(name);
+                  setInfoLocked(false);
+                  lastTouch = now;
+                }
+              }}              
             />
           </div>
         ))}
         {selectedSlot && (
-          <div className="absolute bottom-2 right-2 flex gap-2">
+          <div className="absolute bottom-[1.2%] right-2 flex gap-2 max-sm:bottom-[2%]">
             {/* 전체 초기화 버튼 */}
             <button
               onClick={handleResetAllEquipment}
-              className="bg-red-600 w-[90px] h-[30px] rounded text-[13px]
-              font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center"
+              className="bg-red-600 w-[90px] h-[30px] rounded text-[13px] font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center
+                         max-sm:text-[9px] max-sm:w-[60px] max-sm:h-[20px]"
             >
               전체 초기화
             </button>
@@ -474,7 +503,8 @@ export default function MainPage() {
                 setShowInfo(false);
                 setInfoLocked(false);
               }}
-              className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-galmuri px-4 py-1 rounded text-[13px]"
+              className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-galmuri px-4 py-1 rounded text-[13px]
+                         max-sm:text-[9px] max-sm:px-2 max-sm:w-[50px] max-sm:h-[20px]"
             >
               초기화
             </button>
@@ -488,14 +518,15 @@ export default function MainPage() {
                   JSON.stringify({ ...inv, price: undefined, uuid: undefined }) ===
                   JSON.stringify({ ...item, price: undefined, uuid: undefined })
                 );
-
                 if (!isDuplicate) {
                   const newItem = { ...item, uuid: uuidv4() };
                   // 1. 로컬 인벤토리에 추가
                   setInventory((prev) => [...prev, newItem]);
                 }
+                else showToast("이미 인벤토리에 추가된 아이템입니다!", "error")
               }}
-              className="bg-[#44B7CF] hover:bg-[#60DCF6] active:bg-[#2b7f94] font-galmuri text-white px-4 py-1 rounded text-[13px]"
+              className="bg-[#44B7CF] hover:bg-[#60DCF6] active:bg-[#2b7f94] font-galmuri text-white px-4 py-1 rounded text-[13px]
+                         max-sm:text-[9px] max-sm:px-2 max-sm:h-[20px]"
             >
               인벤토리에 저장
             </button>
@@ -504,13 +535,13 @@ export default function MainPage() {
         )}
 
 
-        <button className="absolute bottom-[4px] left-[15px] w-[35px] h-[35px] active:brightness-75 hover:brightness-125 transition"
+        <button className="absolute bottom-[1.2%] left-[3%] w-[10%] active:brightness-75 hover:brightness-125 transition max-sm:w-[7%]"
           onClick={() => setShowInventory((prev) => !prev)}>
           <img src="/images/icons/back_normal.png" draggable="false"/>
         </button>
         
         {showInventory && (
-          <div className="absolute -bottom-[220px] left-[50%] translate-x-[-50%]">
+          <div className="absolute -bottom-[43%] left-1/2 -translate-x-1/2">
             <InventoryPanel
               items={inventory}
               onSlotClick={(item, index) => {
@@ -584,31 +615,44 @@ export default function MainPage() {
           setPowerDiff={setPowerDiff}
           setEquipment={setEquipment}
           equipment={equipment}
+          showInventory={showInventory}
         />
       )}
       
-      {hoveredInventoryItem && !isInfoLocked && (
-      <EquipmentInfo
-        item={hoveredInventoryItem}
-        editable={false}
-        slot={selectedSlot || hoveredInventoryItem.item_equipment_slot}
-        onClose={() => setHoveredInventoryItem(null)}
-        originalEquipment={originalEquipment} // 원본 장비 정보 전달
-        currentEquipment={{ // 현재 장비 상태
-          ...equipment,
-          [selectedSlot]: hoveredInventoryItem
-        }} 
-        character={character}
-        originalPower={originalPower}
-        setSlotColors={() => {}}
-        setPowerDiff={setPowerDiff}
-        setEquipment={setEquipment}
-        equipment={equipment}
-      />
-    )}
+      {hoveredInventoryItem && !isInfoLocked && (() => {
+        // 1. hover된 아이템의 종류(반지, 무기 등)
+        const hoverSlotType = hoveredInventoryItem.item_equipment_slot.replace(/[0-9]/g, "");
+        // 2. 선택된 슬롯의 종류
+        const selectedSlotType = selectedSlot?.replace(/[0-9]/g, "");
+        // 3. 실제 비교할 슬롯 결정
+        const compareSlot =
+          selectedSlot && hoverSlotType === selectedSlotType
+            ? selectedSlot
+            : hoveredInventoryItem.item_equipment_slot;
+
+        return (
+          <EquipmentInfo
+            item={hoveredInventoryItem}
+            editable={false}
+            slot={compareSlot}
+            onClose={() => setHoveredInventoryItem(null)}
+            originalEquipment={originalEquipment}
+            currentEquipment={{
+              ...equipment,
+              [compareSlot]: hoveredInventoryItem
+            }}
+            character={character}
+            originalPower={originalPower}
+            setSlotColors={() => {}}
+            setPowerDiff={setPowerDiff}
+            setEquipment={setEquipment}
+            equipment={equipment}
+          />
+        );
+      })()}
 
     {showSearch && selectedSlot && !equipment[selectedSlot] && (
-      <div className="absolute top-[217px] right-[300px] z-30">
+      <div className="absolute top-[23%] right-[16%] z-30 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:right-auto max-sm:top-[80%]">
         {/* 모달 닫기 X 버튼 */}
         <button
           className="absolute top-2 right-2 text-gray-600 hover:text-black"
@@ -651,7 +695,8 @@ export default function MainPage() {
       </div>
     )}
 
-    {showTutorial && <Tutorial onClose={handleTutorialClose} />}
+    {showTutorial && !isMobile && <Tutorial onClose={handleTutorialClose} />}
+    {showTutorial && isMobile && <TutorialMobile onClose={handleTutorialClose} />}
     {loading && <Loading visible={true} />}
     </div>
   );

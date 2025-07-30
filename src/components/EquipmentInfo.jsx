@@ -52,7 +52,8 @@ export default function EquipmentInfo({
   setSlotColors,
   setPowerDiff,
   setEquipment,
-  equipment
+  equipment,
+  showInventory
 }) {
   
   const [price, setPrice] = useState(item.price?.toString() || "0");  // 가격
@@ -475,8 +476,7 @@ export default function EquipmentInfo({
 
 
   return (
-    <div className="absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-galmuri
-                    overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent">
+    <div className={"absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-galmuri overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent max-sm:-translate-x-1/2 max-sm:w-[90%] max-sm:left-1/2 " + (showInventory ? "max-sm:top-[93%]" : "max-sm:top-[80%]")}>
       <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
 
       <div className="mb-2 text-center">
@@ -484,7 +484,7 @@ export default function EquipmentInfo({
           (item.item_equipment_slot === "보조무기" && character.class !== "듀얼블레이더")
         ) && !isSeedRing &&
          renderStarforceGrid(starforce, +item.item_base_option.base_equipment_level)}
-        <p className="text-lg">
+        <p className="text-lg max-sm:text-[15px]">
           {item.item_name}
         </p>
       </div>
@@ -495,9 +495,9 @@ export default function EquipmentInfo({
           <img src={item.item_icon} className="absolute p-3 inset-0 w-full h-full object-contain" />
         </div>
         <div className="text-sm text-right w-[320px]">
-          <p className="mt-2 text-[#85919F] text-[15px]">전투력 증가량</p>
+          <p className="mt-2 text-[#85919F] text-[15px] max-sm:text-[10px]">전투력 증가량</p>
           <p
-            className={`mt-3 text-[27px] font-kohi whitespace-nowrap ${
+            className={`mt-3 text-[27px] font-kohi whitespace-nowrap max-sm:text-[17px] max-sm:mt-1 ${
               !hasChanged ? "text-white" : diff >= 0 ? "text-white" : "text-[#F20068]"
             }`}
           >

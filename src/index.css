@@ -11,11 +11,13 @@ html, body, #root {
   padding: 0;
   overflow-x: hidden;
   cursor: url('/images/mouse/Cursor.png'), auto;
+  background: url('/images/폰배경.jpg') center center / cover no-repeat;
+  min-height: 100vh;
 }
 
 /* 스크롤바 */  
 ::-webkit-scrollbar { width: 7px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-track { background: white; }
 ::-webkit-scrollbar-thumb { background: #44B7CF; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: #369EBC; }
 

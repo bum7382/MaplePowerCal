@@ -59,7 +59,7 @@ export const tutorialScripts = [
   {
     image: "/images/tutorial/튜토리얼8.jpg",
     texts: [
-      "저장한 장비는 가방 버튼을 눌러 확인이 가능하며 언제든지 다시 장착이 가능하답니다! ",
+      "저장한 장비는 가방 버튼을 눌러 확인이 가능하며 언제든지 다시 장착이 가능하답니다!",
     ]
   },
   {

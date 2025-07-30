@@ -16,20 +16,20 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
   // 항상 SLOTS_PER_PAGE만큼 슬롯 생성 → 비어있으면 null로 채움
   const slots = [...Array(SLOTS_PER_PAGE)].map((_, idx) => currentItems[idx] || null);
   return (
-    <div className="relative bottom-10 inline-block w-[500px] overflow-visible">
+    <div className="relative bottom-10 inline-block w-[500px] max-sm:w-[80vw] max-sm:bottom-[9vh] overflow-visible">
       {/* 인벤토리 배경 */}
       <img src="/images/inventory/inventory.png" alt="inventory background" className="w-[500px]" />
 
       {/* 슬롯 오버레이 */}
-      <div className="absolute top-[32px] left-[20px]">
+      <div className="absolute top-[22%] left-[3.8%] w-[92.3%]">
         {/* 첫 번째 줄 (0~8) */}
-        <div className="flex gap-[5.7px] mb-[6px]">
+        <div className="grid grid-cols-9 gap-[0.8%] mb-[0.8%] w-full">
           {slots.slice(0, 9).map((item, idx) => {
             const globalIdx = startIdx + idx;
             return (
               <div
                 key={idx}
-                className="relative w-[46px] h-[46px] flex items-center justify-center active:bg-[#000000]/20 hover:bg-[#FFFFFF]/20 transition shadow-md"
+                className="relative flex items-center justify-center active:bg-[#000000]/20 hover:bg-[#FFFFFF]/20 transition shadow-md w-full aspect-square"
                 onClick={() => onSlotClick?.(item, globalIdx)}
                 onMouseEnter={() => item && onHoverItem?.(item)}
                 onMouseLeave={() => item && onHoverOut?.()}
@@ -38,7 +38,7 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
                   <>
                     <img
                       src={item.item_icon}
-                      className="w-[30px] h-[30px] object-contain object-center aspect-square"
+                      className="w-[65%] object-contain object-center aspect-square "
                     />
                     {/* 삭제 버튼 */}
                     <button
@@ -58,13 +58,13 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
         </div>
 
         {/* 두 번째 줄 (9~17) */}
-        <div className="flex gap-[5.7px]">
+        <div className="grid grid-cols-9 gap-[0.8%] mb-[0.8%] w-full">
           {slots.slice(9, 18).map((item, idx) => {
             const globalIdx = startIdx + idx + 9;
             return (
               <div
                 key={idx + 10}
-                className="relative w-[46px] h-[46px] flex items-center justify-center active:bg-[#000000]/20 hover:bg-[#FFFFFF]/20 transition shadow-md"
+                className="relative flex items-center justify-center active:bg-[#000000]/20 hover:bg-[#FFFFFF]/20 transition shadow-md w-full aspect-square"
                 onClick={() => onSlotClick?.(item, globalIdx)}
                 onMouseEnter={() => item && onHoverItem?.(item)}
                 onMouseLeave={() => item && onHoverOut?.()}
@@ -73,7 +73,7 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
                   <>
                     <img
                       src={item.item_icon}
-                      className="w-[30px] h-[30px] object-contain object-center aspect-square"
+                      className="w-[65%] object-contain object-center aspect-square max-sm:w-[20px] max-sm:h-[20px]"
                     />
                     {/* 삭제 버튼 */}
                     <button
@@ -96,7 +96,7 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
       {/* 좌우 버튼 */}
       {page > 0 && (
         <button
-          className="absolute left-[-20px] top-[28px] w-[17px]"
+          className="absolute left-[-5%] top-[20%] w-[3.5%]"
           onClick={() => setPage((p) => p - 1)}
         >
           <img src="/images/inventory/btnL_normal.png" alt="prev" className="w-full h-full object-contain" />
@@ -104,7 +104,7 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
       )}
       {page < totalPages - 1 && (
         <button
-          className="absolute right-[-20px] top-[28px] w-[17px]"
+          className="absolute right-[-5%] bottom-[20%] w-[3.5%]"
           onClick={() => setPage((p) => p + 1)}
         >
           <img src="/images/inventory/btnR_normal.png" alt="next" className="w-full h-full object-contain" />
