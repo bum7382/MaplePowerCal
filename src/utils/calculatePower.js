@@ -290,7 +290,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
   const finalCrit = (135 + baseStat.crit_damage) / 100;
   const power = Math.floor(finalStat * finalAtk * finalDmg * finalCrit * finalDamage);
   
-  
+  /*
   console.log("전투력 계산:", {
     initialStat,
     baseStat,
@@ -303,8 +303,7 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     finalDmg,
     finalCrit,
     power
-  });
-  
-  
+  });*/
+
   return isNaN(power) ? 0 : power;
 }

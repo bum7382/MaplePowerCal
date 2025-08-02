@@ -45,7 +45,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
     // 캐시 존재 X 시 api 호출
     const result = await fetchCharacterByName(inputValue.trim());
     if (!result || result?.error) {
-      showToast("❌ 캐릭터를 찾을 수 없습니다.", "error");
+      showToast("캐릭터를 찾을 수 없습니다.", "error");
       if (setLoading) setLoading(false);
       return;
     }

@@ -1,27 +1,26 @@
-// frontend/src/components/OptionGroupEditor.jsx
-// 잠재옵션 또는 에디셔널 잠재옵션을 드롭다운 + 수치 입력 형식으로 설정하는 컴포넌트
 import React, { useEffect, useState, useMemo } from "react";
-import usePotentialOptions from "@/utils/usePotentialOptions";
+import potentialOptions from "../data/potentialOptions.json";
 
-function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// 정규표현식 패턴
+function escapeRegex(stat) {
+  return stat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function parseOptionString(optionStr, allOptions) {
-  if (!optionStr || typeof optionStr !== "string") return null;
+function parseOptionString(optionStat, allOptions) {
+  if (!optionStat || typeof optionStat !== "string") return null;
 
   for (const opt of allOptions) {
-    // 1. escape 템플릿
+    // escape 템플릿
     let escaped = escapeRegex(opt.template);
 
-    // 2. 변수 자리에 캡처 그룹 삽입 (음수 포함)
+    // 변수 자리에 캡처 그룹 삽입 (음수 포함)
     escaped = escaped
       .replace("\\{percent\\}", "(-?\\d+)")
       .replace("\\{level\\}", "(-?\\d+)")
       .replace("\\{value\\}", "(-?\\d+)");
 
     const regex = new RegExp("^" + escaped + "$");
-    const match = optionStr.trim().match(regex);
+    const match = optionStat.trim().match(regex);
 
     if (match) {
       const values = {};
@@ -50,7 +49,7 @@ export default function OptionGroupEditor({ item, type, onChange }) {
   const cannotHavePotential =
     noPotentialSlots.includes(item.item_equipment_slot) || isSeedRing;
 
-  const options = usePotentialOptions();  // 전체 옵션 템플릿 불러오기
+  const options = potentialOptions;  // 전체 옵션 템플릿 불러오기
   const [grade, setGrade] = useState(item[type === "잠재" ? "potential_option_grade" : "additional_potential_option_grade"] || "없음");
   const [parsedOptions, setParsedOptions] = useState([
     { template: null, values: {} },

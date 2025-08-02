@@ -1,10 +1,10 @@
 // src/components/SoulOptionEditor.jsx
 // 소울 옵션 편집기 컴포넌트
 import React from "react";
-import useSoulOptions from "@/utils/useSoulOptions";
+import soulOptionSet from "../data/soulOptions.json";
 
 export default function SoulOptionEditor({ value, onChange }) {
-  const options = useSoulOptions();
+  const options = soulOptionSet;
   const { template, value: statValue } = value || {};
 
   return (
@@ -16,7 +16,7 @@ export default function SoulOptionEditor({ value, onChange }) {
           value={template?.label || ""}
           onChange={(e) => {
             const selected = options.find(opt => opt.label === e.target.value);
-            if (selected) onChange({ template: selected, value: "" });
+            if (selected) onChange({ template: selected, value: statValue });
           }}
         >
           <option value="">선택 안함</option>

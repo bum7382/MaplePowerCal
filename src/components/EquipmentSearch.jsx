@@ -2,49 +2,73 @@ import { useEffect, useState } from "react";
 import slotMap from "../data/itemTypeToSlot.json";
 import statMap from "../data/statMap.json";
 import { useToast } from "../utils/toastContext";
+import jobKind from "../data/jobKind.json";
 
-export default function EquipmentSearch({ slot, onSelectItem }) {
+// 직업에 해당하는 장비만 보임
+function canSeeItem(item, currentJobClass) {
+  // 직업 제한 없을 때
+  if (!item.requiredJobs || item.requiredJobs.length === 0) return true;
+
+  // 직업 제한 존재 시
+  for (const jobGroup of item.requiredJobs) {
+    // 전직 완료 직업인지 확인 (전사, 궁수 등)
+    if (jobKind[jobGroup]) {
+      // 특정 직업 제한인지 확인
+      if (jobKind[jobGroup].includes(currentJobClass)) return true;
+    } else {
+      return true;
+    }
+  }
+  // 위 조건에 안 걸리면 보이지 않게
+  return false;
+}
+
+export default function EquipmentSearch({ slot, onSelectItem, character_class }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const { showToast } = useToast();
 
-useEffect(() => {
-  const delayDebounce = setTimeout(() => {
-    if (query.length > 0) {
-      // 기존 문자열 검색
-      fetch(`https://maplestory.io/api/KMS/389/item/?searchFor=${encodeURIComponent(query)}`)
-        .then(res => res.json())
-        .then((data) => {
-          setResults(data);
-        })
-        .catch((err) => {
-          showToast("검색에 실패하였습니다.", "error");
-          setResults([]);
-        });
-    } else {
-      // 전체 장비 가져와서 subCategory 기준 필터
-      fetch("https://maplestory.io/api/KMS/389/item/category/equip")
-        .then(res => res.json())
-        .then((data) => {
-          setResults(data);
-        })
-        .catch((err) => {
-          showToast("장비 목록을 불러오는 데에 실패했습니다.", "error");
-          setResults([]);
-        });
-    }
-  }, 300);
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      // 검색 단어 존재 시
+      if (query.length > 0) {
+        // 기존 문자열 검색
+        fetch(`https://maplestory.io/api/KMS/389/item/?searchFor=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then((data) => {
+            setResults(data);
+          })
+          .catch((err) => {
+            showToast("검색에 실패하였습니다.", "error");
+            setResults([]);
+          });
+      }
+      // 검색 단어 X 시 해당 부위 장비 전체 리스트 보여줌 
+      else {
+        // 전체 장비 가져와서 subCategory 기준 필터
+        fetch("https://maplestory.io/api/KMS/389/item/category/equip")
+          .then(res => res.json())
+          .then((data) => {
+            setResults(data);
+          })
+          .catch((err) => {
+            showToast("장비 목록을 불러오는 데에 실패했습니다.", "error");
+            setResults([]);
+          });
+      }
+    }, 300);
 
-  return () => clearTimeout(delayDebounce);
-}, [query, slot]);
+    return () => clearTimeout(delayDebounce);
+  }, [query, slot]);
 
 
+  // 이름 정규화
   function getBaseSlotName(slotName) {
     // "반지1" → "반지", "펜던트2" → "펜던트"
     return slotName.replace(/[0-9]/g, "");
   }
 
-  // 2. 변환 함수
+  // 검색한 장비 -> Nexon Open API 형식으로 변환
   function convertToNexonFormat(apiData) {
     const nexonBaseOption = {}
 
@@ -153,7 +177,7 @@ useEffect(() => {
       potential_option_flag: "false",
       potential_option_grade: null,
       scroll_resilience_count: "0",
-      scroll_upgrade: "0",
+      scroll_upgrade: (Number(apiData.metaInfo?.tuc || 0) + 1).toString(),
       scroll_upgradeable_count: "0",
       soul_name: null,
       soul_option: null,
@@ -161,10 +185,10 @@ useEffect(() => {
       starforce: "0",
       starforce_scroll_flag: "미사용"
     };
-    
     return finalOption;
   }
 
+  // 이름 정규화
   function getSlotFromItem(item) {
     const cat = item.typeInfo?.category;
     const sub = item.typeInfo?.subCategory;
@@ -176,9 +200,10 @@ useEffect(() => {
 
   const baseSlot = getBaseSlotName(slot);
 
+  // 결과 정규화: 캐시템이거나 장비가 아닐 경우 보이지 않게 함
   const filteredResults = results.filter((item) => {
     const itemSlot = getSlotFromItem(item); // "반지", "펜던트", ...
-    return item.typeInfo?.overallCategory === "Equip" && item.isCash == false && itemSlot === baseSlot;
+    return item.typeInfo?.overallCategory === "Equip" && item.isCash !== true && itemSlot === baseSlot && canSeeItem(item, character_class);
   });
 
   function handleItemSelect(itemId) {
@@ -209,7 +234,8 @@ useEffect(() => {
         placeholder="아이템 이름 입력..."
         className="w-full px-2 py-1 text-black rounded"
       />
-
+      
+      {/* 장비 리스트 */}
       <div className="h-[300px] overflow-y-auto mt-2 space-y-2 scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent">
         {filteredResults.length > 0 ? (
           filteredResults.map((item) => (

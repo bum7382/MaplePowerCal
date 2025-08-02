@@ -1,4 +1,3 @@
-// frontend/src/components/InventoryPanel.jsx
 // 인벤토리 패널 컴포넌트
 import React, { useState } from "react";
 
@@ -13,7 +12,7 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
   const startIdx = page * SLOTS_PER_PAGE;
   const currentItems = items.slice(startIdx, startIdx + SLOTS_PER_PAGE);
 
-  // 항상 SLOTS_PER_PAGE만큼 슬롯 생성 → 비어있으면 null로 채움
+  // 항상 SLOTS_PER_PAGE만큼 슬롯 생성, 비어있으면 null
   const slots = [...Array(SLOTS_PER_PAGE)].map((_, idx) => currentItems[idx] || null);
   return (
     <div className="relative bottom-10 inline-block w-[500px] max-sm:w-[80vw] max-sm:bottom-[9vh] overflow-visible">

@@ -1,9 +1,7 @@
 // src/pages/MainPage.jsx
-import React, {useEffect, useState, useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import EquipmentInfo from "../components/EquipmentInfo.jsx";
 import { calculatePower } from "../utils/calculatePower";
-import BasicStatModal from "../components/BasicStatModal";
-import jobStat from "../data/jobStat.json";
 import InventoryPanel from "../components/InventoryPanel.jsx";
 import EquipmentSearch from "../components/EquipmentSearch.jsx";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +16,9 @@ import TutorialMobile from "../components/TutorialMobile.jsx";
 
 
 export default function MainPage() {
-  const [loading, setLoading] = useState(true); // 로딩 상태
+  // 캐릭터 정보
+  const [character, setCharacter] = useState(null);
+
   // 슬롯
   const [hoveredSlot, setHoveredSlot] = useState(null); // 슬롯 호버 상태
   const [isInfoLocked, setInfoLocked] = useState(false);  // 슬롯 클릭 상태
@@ -29,7 +29,6 @@ export default function MainPage() {
   // 장비
   const [equipment, setEquipment] = useState({}); // 장비 정보
   const [originalEquipment, setOriginalEquipment] = useState({}); // 원본 장비 정보
-  const [equipmentLoaded, setEquipmentLoaded] = useState(false);  // 장비 데이터 로딩 상태
   const [showInfo, setShowInfo] = useState(false);  // 장비 정보 표시 여부
   const [showSearch, setShowSearch] = useState(false);  // 장비 찾기 모달 여부
 
@@ -54,35 +53,40 @@ export default function MainPage() {
   });
   const [showInventory, setShowInventory] = useState(false);  // 인벤토리 표시 여부
   const [hoveredInventoryItem, setHoveredInventoryItem] = useState(null); // 인벤토리 아이템 호버 상태
-  const navigate = useNavigate();
-  const { showToast } = useToast();
+
+  // 기타 상태
+  const navigate = useNavigate(); // 내비게이터
+  const { showToast } = useToast(); // 토스트
+  const [loading, setLoading] = useState(true); // 로딩 상태
   const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
   const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
-
   const [isMobile, setIsMobile] = useState(false);  // 모바일 여부
+
   
+  const lastTouch = useRef(0);  // 마지막 터치 시간
+  
+  // 모바일 여부 확인
   useEffect(() => {
       if (/iPhone|iPad|iPod|Android/i.test(window.navigator.userAgent)) {
         setIsMobile(true);
       }
     }, []);
 
+  /* ===== 튜토리얼 ===== */
+  // 튜토리얼 기록 확인
   useEffect(() => {
     // localStorage에 튜토리얼 본 기록이 없으면 튜토리얼 띄움
     const hasSeen = localStorage.getItem("tutorialSeen");
     if (!hasSeen) setShowTutorial(true);
   }, []);
 
-  const handleTutorialOpen = () => setShowTutorial(true);
-
+  // 튜토리얼 닫기 핸들러
   const handleTutorialClose = () => {
     setShowTutorial(false);
     localStorage.setItem("tutorialSeen", "true");
   };
 
-  // 캐릭터 정보
-  const [character, setCharacter] = useState(null);
-
+  /* ===== 캐릭터 정보 ===== */
   // 로컬 스토리지에서 캐릭터 정보 불러오기
   useEffect(() => {
     const saved = localStorage.getItem("selectedCharacter");
@@ -106,14 +110,15 @@ export default function MainPage() {
   }, [character, loading, navigate]);
 
 
-  
   // 장비 로드
   useEffect(() => {
+    // 받은 값 없으면 에러
     if (!character?.equipment) return;
 
     const equipmentMap = {};
     const countMap = {};
 
+    // 펜던트, 반지 정규화
     for (const item of character.equipment) {
       let raw = item.item_equipment_slot || item.item_equipment_part;
       if (!raw) continue;
@@ -130,20 +135,14 @@ export default function MainPage() {
 
     setOriginalEquipment(equipmentMap);
     setEquipment(equipmentMap);
-    setEquipmentLoaded(true);
   }, [character]);
-
-  // 인벤토리 로컬 스토리지에 저장
-  useEffect(() => {
-    localStorage.setItem("inventory", JSON.stringify(inventory));
-  }, [inventory]);
 
   // 기초 전투력 계산 활성화
   useEffect(() => {
     setInitDone(false);
   }, [character?.name]);
 
-  // 기본 전투력 계산
+  // 기초 전투력 계산 - 최초 한 번 계산
   useEffect(() => {
     if (initDone) return;
     if (!character || Object.keys(equipment).length === 0) return;
@@ -157,25 +156,6 @@ export default function MainPage() {
     setOriginalPower(basePower);
     setInitDone(true);
   }, [character, equipment, initDone]);
-
-  // 장비 슬롯 클릭 시
-  const handleSlotClick = (slotName) => {
-    setSelectedSlot(slotName);
-    setHoveredSlot(slotName);
-    setInfoLocked(true);
-    if (equipment[slotName]) {
-      setShowInfo(true);
-    } else {
-      setShowSearch(true);
-    }
-  };
-
-
-  useEffect(() => {
-    if (!character) return;
-    const favs = JSON.parse(localStorage.getItem("favorites") || "[]");
-    setIsFavorite(favs.includes(character.name));
-  }, [character]);
     
   // 전체 장비 초기화 
   const handleResetAllEquipment = () => {
@@ -197,6 +177,21 @@ export default function MainPage() {
     setInfoLocked(false);
   };
 
+  /* ===== 인벤토리 ===== */
+  // 인벤토리 로컬 스토리지에 저장
+  useEffect(() => {
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+  }, [inventory]);
+
+  /* ===== 즐겨찾기 ===== */
+  // 즐겨찾기 여부
+  useEffect(() => {
+    if (!character) return;
+    const favs = JSON.parse(localStorage.getItem("favorites") || "[]");
+    setIsFavorite(favs.includes(character.name));
+  }, [character]);
+
+  // 즐겨찾기 클릭 핸들러
   const handleFavoriteClick = () => {
     const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
     let newFavorites;
@@ -214,6 +209,7 @@ export default function MainPage() {
     localStorage.setItem("favorites", JSON.stringify(newFavorites));
   };
   
+  // 정보 갱신 핸들러
   const handleRefresh = async () => {
     setLoading(true);
     try {
@@ -246,7 +242,8 @@ export default function MainPage() {
       showToast("정보 갱신에 실패했습니다.", "error");
     }
   };
-  // 전투력 표시 포맷
+
+  // 전투력 표시 포맷: ??억 ??만
   function formatKoreanNumber(num) {
     const abs = Math.abs(num);
     const eok = Math.floor(abs / 100000000);
@@ -261,6 +258,13 @@ export default function MainPage() {
     return parts.join(" ");
   }
 
+  // 장비 수정 핸들러
+  const handleEditClick = () => {
+    setInfoLocked(true);   // 수정모드로 진입
+    setShowInfo(true);     // 정보창 다시 표시
+  };
+
+  // 각 장비 슬롯 위치
   const slotStyle = "absolute w-[48px] h-[48px] bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
   const slots = [
     ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 7.9 })),
@@ -275,10 +279,15 @@ export default function MainPage() {
   return (
     <div className="relative w-screen h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat select-none"
          style={{ backgroundImage: "url(/images/background_blur.png)" }}>
+      {/* 장비창 */}
       <div className="relative w-[420px] aspect-[420/509] max-sm:w-[90%]">
+        {/* 장비창 배경 */}
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
+        {/* 장비창 설명 */}
         <img src="/images/inventory/equipmentUI.png" draggable="false" className="absolute top-[14%] left-[3.6%] w-[92.8%]" />
-        <button onClick={handleTutorialOpen}>
+
+        {/* 튜토리얼 버튼 */}
+        <button onClick={() => setShowTutorial(true)}>
             <img
               src="/images/tutorial/정보창.png"
               draggable="false"
@@ -286,6 +295,7 @@ export default function MainPage() {
               className="absolute top-[5%] right-[2%] w-[7%] active:brightness-75 hover:brightness-125 transition"
             />
         </button>
+        {/* 정보 갱신 버튼 */}
         <button
           onClick = {handleRefresh}
           className="absolute top-[5%] right-[10%] bg-[#1F2735] bg-opacity-60 w-[85px] h-[30px] rounded text-[13px]
@@ -294,17 +304,21 @@ export default function MainPage() {
           >
           정보 갱신
         </button>
+        
+        {/* 전투력 증가량 */}
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
-          <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-60 px-4 py-1 rounded
+          <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-50 px-4 py-1 rounded
                           max-sm:w-[300px]">
             <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2] 
                             max-sm:-top-[23px] max-sm:left-[35%] max-sm:text-center max-sm:text-black">
               전투력 증가량:
             </span>
             <span
-              className={`font-kohi text-[23px] ${
-                powerDiff < 0 ? "text-[#F20068]" : "text-white"
-              }`}
+              className={`
+                font-kohi text-[23px]
+                ${powerDiff < 0 ? "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent" : ""}
+                ${powerDiff >= 0 ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent" : ""}
+              `}
             >
               {powerDiff === 0
                 ? "0"
@@ -313,16 +327,18 @@ export default function MainPage() {
           </div>
         </div>
         
+        {/* 장비창 인벤토리 창 */}
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[88%] left-[4%] w-[40%]" />
-        <div draggable="false" className="absolute top-[29%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center max-sm:top-[30%]">
-            {/* 캐릭터 이미지 & 이름 */}
+        <div draggable="false" className="absolute top-[27%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center max-sm:top-[30%]">
+          {/* 캐릭터 이미지 */}
           <img src={character?.image || "/images/default_character.png"} 
                draggable="false" 
                className="w-[7vw] max-w-none max-sm:w-full" 
                onMouseEnter={() => setShowCalPower(true)}
                onMouseLeave={() => setShowCalPower(false)}
           />
-          {/* 툴팁 */}
+
+          {/* 전투력 표시 툴팁 */}
           {showCalPower && (
             <div className="absolute bottom-[125%] left-1/2 -translate-x-1/2 ml-2 px-3 py-1 bg-[#1F2735] bg-opacity-60 text-white 
             text-xs rounded shadow-lg whitespace-nowrap z-20 font-galmuri text-center">
@@ -330,11 +346,15 @@ export default function MainPage() {
               원본 전투력: {formatKoreanNumber(character.power) || "0"}
             </div>
           )}
+
+          {/* 캐릭터 이름 & 즐겨찾기 */}
           <div className="flex flex-row items-center space-x-1">
+            {/* 캐릭터 이름 */}
             <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-galmuri relative -top-[5px]
                             max-sm:text-[9px] max-sm:py-[0.01px]">
               {character?.name || "이름없음"}
             </span>
+            {/* 즐겨찾기 */}
             <button 
               onClick = {handleFavoriteClick}
               className="active:brightness-75 hover:brightness-110 transition">
@@ -347,6 +367,8 @@ export default function MainPage() {
             </button>
           </div>
         </div>
+
+        {/* 처음으로 버튼 */}
         <button
           className="absolute top-[75%] left-[40%] px-4 py-2 bg-[#44B7CF] text-white items-center text-[80%] font-galmuri rounded hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50
                     max-sm:text-[10px] max-sm:top-[80%] max-sm:px-3 max-sm:py-1"
@@ -354,6 +376,8 @@ export default function MainPage() {
         >
           처음으로
         </button>
+
+        {/* 장비 슬롯 */}
         {slots.map(({ name, top, left }) => (
           <div
             key={name}
@@ -373,7 +397,7 @@ export default function MainPage() {
               }
             }}
           >
-            {/* 배경 색 (슬롯 저장 상태에 따라 표시됨) */}
+            {/* 슬롯 배경 색 - 장비 변경 시 색 바뀜 */}
             <div
               className="absolute inset-0 rounded"
               style={{ backgroundColor: slotColors[name] || "transparent", zIndex: 5 }}
@@ -389,7 +413,7 @@ export default function MainPage() {
               />
             )}
 
-            {/* X 버튼 (장착 해제) */}
+            {/* 장비 장착 해제 버튼 */}
             {selectedSlot === name && equipment[name] && (
               <button
                 onClick={(e) => {
@@ -426,14 +450,14 @@ export default function MainPage() {
             <button
               className={`${slotStyle} z-20`}
               style={{ backgroundColor: "transparent" }}
+              // 단일 클릭: 슬롯만 선택
               onClick={() => {
-                // 단일 클릭: 슬롯만 선택
                 setSelectedSlot(name);
                 setHoveredSlot(name);
                 setInfoLocked(false);
               }}
-              onDoubleClick={() => {
               // 더블 클릭: 수정창 열기
+              onDoubleClick={() => {
                 setSelectedSlot(name);
                 setHoveredSlot(name);
                 const hasItem = !!equipment[name];
@@ -441,21 +465,22 @@ export default function MainPage() {
                 setShowInfo(hasItem);
                 setShowSearch(!hasItem);
               }}
+              // 모바일 - 더블 터치 시 더블 클릭과 동일하게 작동
               onTouchStart={() => {
                 const now = Date.now();
-                if (now - lastTouch < 300) {
+                if (now - lastTouch.current < 300) {
                   setSelectedSlot(name);
                   setHoveredSlot(name);
                   const hasItem = !!equipment[name];
                   setInfoLocked(true);
                   setShowInfo(hasItem);
                   setShowSearch(!hasItem);
-                  lastTouch = 0;
+                  lastTouch.current = 0;
                 } else {
                   setSelectedSlot(name);
                   setHoveredSlot(name);
                   setInfoLocked(false);
-                  lastTouch = now;
+                  lastTouch.current = now;
                 }
               }}              
             />
@@ -513,16 +538,15 @@ export default function MainPage() {
             {equipment[selectedSlot] && (<button
               onClick={async () => {
                 const item = equipment[selectedSlot];
-
                 const isDuplicate = inventory.some((inv) =>
                  // JSON.stringify({ ...inv, price: undefined, uuid: undefined }) ===
                  // JSON.stringify({ ...item, price: undefined, uuid: undefined })
                  JSON.stringify({ ...inv, uuid: undefined }) ===
                  JSON.stringify({ ...item, uuid: undefined })
                 );
+                // 중복 저장 불가
                 if (!isDuplicate) {
                   const newItem = { ...item, uuid: uuidv4() };
-                  // 1. 로컬 인벤토리에 추가
                   setInventory((prev) => [...prev, newItem]);
                 }
                 else showToast("이미 인벤토리에 추가된 아이템입니다!", "error")
@@ -537,16 +561,19 @@ export default function MainPage() {
         )}
 
 
+        {/* 인벤토리 아이콘 */}
         <button className="absolute bottom-[1.2%] left-[3%] w-[10%] active:brightness-75 hover:brightness-125 transition max-sm:w-[7%]"
           onClick={() => setShowInventory((prev) => !prev)}>
           <img src="/images/icons/back_normal.png" draggable="false"/>
         </button>
         
+        {/* 인벤토리 창 */}
         {showInventory && (
           <div className="absolute -bottom-[43%] left-1/2 -translate-x-1/2">
             <InventoryPanel
               items={inventory}
-              onSlotClick={(item, index) => {
+              // 장비 클릭 시
+              onSlotClick={(item) => {
                 if (!selectedSlot) return;
                   const slotBaseName = selectedSlot.replace(/[0-9]/g, "");
                   const itemSlotBaseName = item.item_equipment_slot.replace(/[0-9]/g, "");
@@ -582,7 +609,7 @@ export default function MainPage() {
                 setInfoLocked(false);
               }}
               onDeleteClick={async (itemToDelete) => {
-                // 1. 로컬 인벤토리에서 제거
+                // 로컬 인벤토리에서 제거
                 setInventory((prev) => prev.filter(i => i.uuid !== itemToDelete.uuid));
               }}
               onHoverItem={(item) => setHoveredInventoryItem(item)}
@@ -592,11 +619,13 @@ export default function MainPage() {
         )}
       </div>
         
-
+      {/* hover 시 장비 정보 보임 */}
       {showInfo && hoveredSlot && equipment[hoveredSlot] && (
         <EquipmentInfo
           item={equipment[hoveredSlot]}
           editable={isInfoLocked}
+          onEdit={handleEditClick}
+          isMobile = {isMobile}
           slot={hoveredSlot}
           onClose={() => {
             setShowInfo(false);
@@ -621,12 +650,13 @@ export default function MainPage() {
         />
       )}
       
+      {/* 인벤토리에 있는 장비 hover 시 정보 보임 */}
       {hoveredInventoryItem && !isInfoLocked && (() => {
-        // 1. hover된 아이템의 종류(반지, 무기 등)
+        // hover된 아이템의 종류(반지, 무기 등)
         const hoverSlotType = hoveredInventoryItem.item_equipment_slot.replace(/[0-9]/g, "");
-        // 2. 선택된 슬롯의 종류
+        // 선택된 슬롯의 종류
         const selectedSlotType = selectedSlot?.replace(/[0-9]/g, "");
-        // 3. 실제 비교할 슬롯 결정
+        // 실제 비교할 슬롯 결정
         const compareSlot =
           selectedSlot && hoverSlotType === selectedSlotType
             ? selectedSlot
@@ -653,6 +683,7 @@ export default function MainPage() {
         );
       })()}
 
+    {/* 장비 검색 모달 */}
     {showSearch && selectedSlot && !equipment[selectedSlot] && (
       <div className="absolute top-[23%] right-[16%] z-30 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:right-auto max-sm:top-[80%]">
         {/* 모달 닫기 X 버튼 */}
@@ -693,12 +724,16 @@ export default function MainPage() {
             );
             setPowerDiff(newPower - originalPower);
           }}
+          character_class = {character.class}
         />
       </div>
     )}
 
+    {/* 튜토리얼 */}
     {showTutorial && !isMobile && <Tutorial onClose={handleTutorialClose} />}
     {showTutorial && isMobile && <TutorialMobile onClose={handleTutorialClose} />}
+
+    {/* 로딩 모달 */}
     {loading && <Loading visible={true} />}
     </div>
   );

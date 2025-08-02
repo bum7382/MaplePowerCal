@@ -1,12 +1,15 @@
 // frontend/src/components/EquipmentInfo.jsx
 // 장비 정보를 표시하는 컴포넌트
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { isItemChanged } from "@/utils/equipmentUtils";
 import { calculatePower } from "@/utils/calculatePower";
 import OptionGroupEditor from "@/components/OptionGroupEditor";
-import useSoulOptions from "@/utils/useSoulOptions";
+import soulOptionSet from "../data/soulOptions.json";
 import SoulOptionEditor from "@/components/SoulOptionEditor";
 import calculateStarforceStat from "../utils/calculateStarforceStat"
+import tyrantTable from "../data/starforceTyrantStatTable";
+import ScrollModal from "./ScrollModal";
+import { AnimatePresence } from "framer-motion";
 
 // 등급별 색상
 const gradeColor = {
@@ -36,12 +39,25 @@ const commonStats = [
 
 // 무기 전용 옵션
 const weaponOnly = ["boss_damage", "ignore_monster_armor", "damage"];
+
 // 방어구 전용 옵션
 const armorOnly = ["speed", "jump"];
+
+// 퍼센트를 사용하는 옵션 목록
+const percentKeys = ["boss_damage", "ignore_monster_armor", "all_stat", "damage"];
+
+// 타일런트 장비 확인
+function isTyrantItem(name) {
+  return tyrantTable.some(row =>
+    row.match.some(keyword => name.includes(keyword))
+  );
+}
 
 export default function EquipmentInfo({
   item,
   editable,
+  onEdit,
+  isMobile,
   slot,
   onClose,
   onSave,
@@ -56,7 +72,7 @@ export default function EquipmentInfo({
   showInventory
 }) {
   
-  const [price, setPrice] = useState(item.price?.toString() || "0");  // 가격
+  // const [price, setPrice] = useState(item.price?.toString() || "0");  // 가격
   const [starforce, setStarforce] = useState(Number(item.starforce || 0));  // 스타포스
 
   const [starforceOption, setStarforceOption] = useState({ ...item.item_starforce_option });  // 스타포스작
@@ -70,9 +86,12 @@ export default function EquipmentInfo({
   const noPotentialSlots = ["뱃지", "훈장", "포켓 아이템"]; // 잠재옵션 불가 슬롯
   const isSeedRing = item.special_ring_level !== 0;  // 시드링 여부
   const cannotHavePotential = noPotentialSlots.includes(item.item_equipment_slot) || isSeedRing;  // 잠재옵션 불가
+  let isTyrant = false; // 타일런트 장비 여부
+  const [showScrollModal, setShowScrollModal] = useState(false);  // 주문서 모달
+  const etcOptionsBackup = useRef();  // 백업용 추옵
   
   // 소울 옵션 초깃값 설정
-  const soulOptions = useSoulOptions();
+  const soulOptions = soulOptionSet;
   const [soulTemplate, setSoulTemplate] = useState(() => {
     const valueMatch = item.soul_option?.match(/([0-9]+)/);
     const value = valueMatch ? valueMatch[1] : "";
@@ -88,7 +107,7 @@ export default function EquipmentInfo({
     return valueMatch ? valueMatch[1] : "";
   });
 
-  // 장비 바뀌면 초기화
+  // 장비 바뀌면 옵션 초기화
   useEffect(() => {
     if (!item) return;
     
@@ -110,29 +129,39 @@ export default function EquipmentInfo({
 
   }, [item, soulOptions]);
 
-  // 로드되었을 때 실행
+  // 에러 처리
   useEffect(() => {
     if (!item || !originalEquipment || !character) return;
-
   }, [item, originalEquipment, character]);
 
-
-  // 퍼센트를 사용하는 옵션 목록
-  const percentKeys = ["boss_damage", "ignore_monster_armor", "all_stat", "damage"];
+  
 
   // 장비 레벨에 따른 최대 스타포스 반환
-  const getMaxStarforce = (level) => {
-    if (level <= 94) return 5;
-    if (level <= 107) return 8;
-    if (level <= 117) return 10;
-    if (level <= 127) return 15;
-    if (level <= 137) return 20;
-    return 30;
+  const getMaxStarforce = (name, level) => {
+    isTyrant = isTyrantItem(name);
+
+    if(isTyrant){
+      if (level <= 94) return 3;
+      if (level <= 107) return 5;
+      if (level <= 117) return 8;
+      if (level <= 127) return 10;
+      if (level <= 137) return 12;
+      else return 15;
+    }
+    else{
+      if (level <= 94) return 5;
+      if (level <= 107) return 8;
+      if (level <= 117) return 10;
+      if (level <= 127) return 15;
+      if (level <= 137) return 20;
+      else return 30;
+    }
+    
   };
 
   // 스타포스 UI 렌더링
-  const renderStarforceGrid = (current, level) => {
-    const max = getMaxStarforce(level);
+  const renderStarforceGrid = (current, level, name) => {
+    const max = getMaxStarforce(name, level);
     const stars = [];
     for (let i = 0; i < max; i++) {
       const filled = i < current;
@@ -148,7 +177,7 @@ export default function EquipmentInfo({
             setStarforce(next);
 
             // 스타포스 변경 시 스탯 증가량
-            const bonus = calculateStarforceStat(character.class, item, next);
+            const bonus = calculateStarforceStat(character.class, item, next, isTyrant);
             if(!bonus) return;
             starforceOption.armor = bonus.armor.toString();
             starforceOption.attack_power = bonus.attack.toString();
@@ -207,6 +236,12 @@ export default function EquipmentInfo({
 
     if (!editable && total === 0) return null;  // 읽기 전용이면서 총합이 0인 경우 표시하지 않음
 
+    // 보공, 뎀, 올스탯은 추옵만 붙일 수 있음
+    const noEditTypes = ["boss_damage", "damage", "all_stat", "ignore_monster_armor"];
+    const showEtcInput = editable && !noEditTypes.includes(key);
+    const showStarInput = editable && !isPercent && !noEditTypes.includes(key);
+    const showAddInput = editable && key !== "ignore_monster_armor"
+
     const handleChange = (type, value) => {
       const allowEtcPercent = isPercent && type === "etc";
       const allowAddPercent = isPercent && type === "add";
@@ -243,8 +278,6 @@ export default function EquipmentInfo({
       }
     };
 
-
-
     return (
       <div className="font-galmuri flex justify-between text-sm text-white items-center gap-2">
         <span>{label}</span>
@@ -257,15 +290,19 @@ export default function EquipmentInfo({
               {editable ? (
                 <>
                   {/* 🟣 주문서작 */}
-                  <span className="text-[#AFADFF] text-s"> +</span>
-                  <input
-                    className="w-[30px] text-s bg-transparent border-b border-[#AFADFF] text-[#AFADFF] text-right"
-                    value={etcOptions[key] || ""}
-                    onChange={(e) => handleChange("etc", e.target.value)}
-                  />
-                  {isPercent && <span className="text-[#AFADFF] text-s">%</span>}
+                  {showEtcInput &&(
+                    <>
+                    <span className="text-[#AFADFF] text-s"> +</span>
+                    <input
+                      className="w-[30px] text-s bg-transparent border-b border-[#AFADFF] text-[#AFADFF] text-right"
+                      value={etcOptions[key] || ""}
+                      onChange={(e) => handleChange("etc", e.target.value)}
+                    />
+                    {isPercent && <span className="text-[#AFADFF] text-s">%</span>}
+                    </>
+                  )}
                   {/* ⭐ 스타포스작*/}
-                  {!isPercent && (
+                  {showStarInput && (
                     <>
                       <span className="text-[#FFCC00] text-s"> +</span>
                       <input
@@ -276,6 +313,7 @@ export default function EquipmentInfo({
                     </>
                   )}
                   {/* 🟢 추가옵션 */}
+                  {showAddInput && (<>
                   <span className="text-[#0AE3AD] text-s"> +</span>
                   <input
                     className="w-[30px] text-s bg-transparent border-b border-[#0AE3AD] text-[#0AE3AD] text-right"
@@ -283,6 +321,7 @@ export default function EquipmentInfo({
                     onChange={(e) => handleChange("add", e.target.value)}
                   />
                   {isPercent && <span className="text-[#0AE3AD] text-s">%</span>}
+                  </>)}
                 </>
               ) : (
                 <>
@@ -368,7 +407,6 @@ export default function EquipmentInfo({
     if (str.includes("{level}")) str = str.replace("{level}", values?.level ?? "");
     return str;
   };
-
 
   // 저장 버튼 클릭
   const handleSaveClick = () => {
@@ -458,7 +496,7 @@ export default function EquipmentInfo({
   );
 
   const diff = Math.floor(currentPower - originalPowerForSlot);
-
+  
   function formatKoreanNumber(num) {
     const abs = Math.abs(num);
     const eok = Math.floor(abs / 100000000);
@@ -476,73 +514,98 @@ export default function EquipmentInfo({
 
 
   return (
-    <div className={"absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-galmuri overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent max-sm:-translate-x-1/2 max-sm:w-[90%] max-sm:left-1/2 " + (showInventory ? "max-sm:top-[93%]" : "max-sm:top-[80%]")}>
-      <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
-
-      <div className="mb-2 text-center">
-        {!(["훈장", "뱃지", "엠블렘", "포켓 아이템"].includes(item.item_equipment_slot) ||
-          (item.item_equipment_slot === "보조무기" && character.class !== "듀얼블레이더")
-        ) && !isSeedRing &&
-         renderStarforceGrid(starforce, +item.item_base_option.base_equipment_level)}
-        <p className="text-lg max-sm:text-[15px]">
-          {item.item_name}
-        </p>
-      </div>
-
-      <div className="flex items-start">
-        <div className="relative w-[85px] h-[85px]">
-          <img src="/images/info/tooltip_itemicon.png" className="absolute inset-0 w-full h-full object-contain" />
-          <img src={item.item_icon} className="absolute p-3 inset-0 w-full h-full object-contain" />
-        </div>
-        <div className="text-sm text-right w-[320px]">
-          <p className="mt-2 text-[#85919F] text-[15px] max-sm:text-[10px]">전투력 증가량</p>
-          <p
-            className={`mt-3 text-[27px] font-kohi whitespace-nowrap max-sm:text-[17px] max-sm:mt-1 ${
-              !hasChanged ? "text-white" : diff >= 0 ? "text-white" : "text-[#F20068]"
-            }`}
-          >
-            {!hasChanged
-              ? "현재 장착 중인 장비"
-              : `${diff === 0 ? "" : diff > 0 ? "+" : "-"}${formatKoreanNumber(Math.abs(diff))}`}
+    <>
+      {/* 장비 정보 모달 */}
+      <div className={"absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-galmuri overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent max-sm:-translate-x-1/2 max-sm:w-[90%] max-sm:left-1/2 " + (showInventory ? "max-sm:top-[91%]" : "max-sm:top-[80%]")}>
+        <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
+        {/* 스타포스 별 */}
+        <div className="mb-2 text-center">
+          {!(["훈장", "뱃지", "엠블렘", "포켓 아이템"].includes(item.item_equipment_slot) ||
+            (item.item_equipment_slot === "보조무기" && character.class !== "듀얼블레이더")
+          ) && !isSeedRing &&
+          renderStarforceGrid(starforce, +item.item_base_option.base_equipment_level, item.item_name)}
+          <p className="text-lg max-sm:text-[15px]">
+            {item.item_name}
           </p>
-          {/*diff > 0 && price !== "0" && Number(price) !== 0 && (
-          {<div className="mt-3 text-s text-white font-galmuri text-right">
-            1억 메소당 전투력 +{((diff / Number(price)) * 100000000).toFixed(2)}
-          </div>}
-        )*/}
-
         </div>
-      </div>
 
-      <div className="mt-2 text-xs text-[#B7BFC5]">
-        요구 레벨: <span className="text-white">{getReducedLevel()}</span>
-      </div>
+        {/* 아이템 정보 */}
+        <div className="flex items-start">
+          <div className="relative w-[85px] h-[85px]">
+            <img src="/images/info/tooltip_itemicon.png" className="absolute inset-0 w-full h-full object-contain" />
+            <img src={item.item_icon} className="absolute p-3 inset-0 w-full h-full object-contain" />
+          </div>
+          <div className="text-sm text-right w-[320px]">
+            <p className="mt-2 text-[#85919F] text-[15px] max-sm:text-[10px]">전투력 증가량</p>
+            <p
+              className={`mt-3 text-[27px] font-kohi whitespace-nowrap max-sm:text-[17px] max-sm:mt-1 leading-[1.2] ${
+                !hasChanged ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent" : 
+                  diff >= 0 ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent" 
+                  : "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent"
+              }`}
+            >
+              {!hasChanged
+                ? "현재 장착 중인 장비"
+                : `${diff === 0 ? "" : diff > 0 ? "+" : "-"}${formatKoreanNumber(Math.abs(diff))}`}
+            </p>
+            {/*diff > 0 && price !== "0" && Number(price) !== 0 && (
+            {<div className="mt-3 text-s text-white font-galmuri text-right">
+              1억 메소당 전투력 +{((diff / Number(price)) * 100000000).toFixed(2)}
+            </div>}
+          )*/}
 
-      <div className="mt-2 space-y-1">
-        {renderStatLine("STR", "str")}
-        {renderStatLine("DEX", "dex")}
-        {renderStatLine("INT", "int")}
-        {renderStatLine("LUK", "luk")}
-        {renderStatLine("최대 HP", "max_hp")}
-        {renderStatLine("최대 MP", "max_mp")}
-        {renderStatLine("공격력", "attack_power")}
-        {renderStatLine("마력", "magic_power")}
-        {renderStatLine("방어력", "armor")}
-        {renderStatLine("이동속도", "speed")}
-        {renderStatLine("점프력", "jump")}
-        {renderStatLine("보스 몬스터 데미지", "boss_damage")}
-        {renderStatLine("몬스터 방어율 무시", "ignore_monster_armor")}
-        {renderStatLine("올스탯", "all_stat")}
-        {renderStatLine("데미지", "damage")}
-      </div>
+          </div>
+        </div>
 
-        {!cannotHavePotential && (
-          editable ? (
-            <OptionGroupEditor key={`잠재-${item._id || item.slot}`} item={item} type="잠재" 
-              onChange={({ grade, options }) => {
-                setPotentialGroup({ grade, options });
-              }}/>
-          ) : (
+        {/* 요구 레벨 */}
+        <div className="flex flex-row items-center justify-between">
+          <div className="mt-2 text-xs text-[#B7BFC5]">
+            요구 레벨: <span className="text-white">{getReducedLevel()}</span>
+          </div>
+          {!editable && isMobile && (
+            <button
+              className="text-sm text-[#44B7CF] text-[15px] hover:brightness-110 active:brightness-75 transition-all max-sm:text-[12px]"
+              onClick={onEdit} 
+            >
+              장비 수정하기
+            </button>
+          )}
+          { editable &&(
+          <button 
+            className="text-[#B7BFC5] active:brightness-75 hover:text-white transition"
+            onClick = {() => {
+              setShowScrollModal(!showScrollModal)
+              etcOptionsBackup.current = { ...etcOptions };
+            }}>
+            주문서 보기
+          </button>)}
+        </div>
+
+        {/* 추가옵션 */}
+        <div className="mt-2 space-y-1">
+          {renderStatLine("STR", "str")}
+          {renderStatLine("DEX", "dex")}
+          {renderStatLine("INT", "int")}
+          {renderStatLine("LUK", "luk")}
+          {renderStatLine("최대 HP", "max_hp")}
+          {renderStatLine("최대 MP", "max_mp")}
+          {renderStatLine("공격력", "attack_power")}
+          {renderStatLine("마력", "magic_power")}
+          {renderStatLine("방어력", "armor")}
+          {renderStatLine("이동속도", "speed")}
+          {renderStatLine("점프력", "jump")}
+          {renderStatLine("보스 몬스터 데미지", "boss_damage")}
+          {renderStatLine("몬스터 방어율 무시", "ignore_monster_armor")}
+          {renderStatLine("올스탯", "all_stat")}
+          {renderStatLine("데미지", "damage")}
+        </div>
+
+        {/* 잠재옵션 */}
+        {!cannotHavePotential && ( editable ? (
+          <OptionGroupEditor key={`잠재-${item._id || item.slot}`} item={item} type="잠재" 
+            onChange={({ grade, options }) => {
+              setPotentialGroup({ grade, options });
+          }}/>) : (
             renderOptionGroup("잠재옵션", item.potential_option_grade, [
               item.potential_option_1,
               item.potential_option_2,
@@ -551,13 +614,12 @@ export default function EquipmentInfo({
           )
         )}
 
-        {!cannotHavePotential && (
-          editable ? (
-            <OptionGroupEditor key={`에디셔널-${item._id || item.slot}`} item={item} type="에디셔널" 
-              onChange={({ grade, options }) => {
-                setAdditionalGroup({ grade, options });
-              }}/>
-          ) : (
+        {/* 에디셔널 잠재옵션 */}
+        {!cannotHavePotential && ( editable ? (
+          <OptionGroupEditor key={`에디셔널-${item._id || item.slot}`} item={item} type="에디셔널" 
+            onChange={({ grade, options }) => {
+              setAdditionalGroup({ grade, options });
+          }}/>) : (
             renderOptionGroup("에디셔널 잠재옵션", item.additional_potential_option_grade, [
               item.additional_potential_option_1,
               item.additional_potential_option_2,
@@ -566,51 +628,95 @@ export default function EquipmentInfo({
           )
         )}
 
-
-      {item.item_equipment_slot === "무기" && editable && (
-        <SoulOptionEditor
-          value={{ template: soulTemplate, value: soulValue }}
-          onChange={({ template, value }) => {
-            setSoulTemplate(template);
-            setSoulValue(value);
-          }}
-        />
-      )}
-
-      {item.item_equipment_slot === "무기" && !editable && (
-        <div className="mt-3 border-t border-gray-600 pt-2">
-          <div className="flex items-center mb-1">
-            <img src="/images/info/soul_weapon.png" alt="소울" className="w-3 mr-2" />
-            <p className="text-white">소울</p>
-          </div>
-          <p className="text-sm text-white ml-6">
-            {item.soul_option ? `▪ ${item.soul_option}` : "▪ 없음"}
-          </p>
-        </div>
-      )}
-
-
-      {editable && (
-        <div className="mt-4">
-          {/*<div className="text-sm text-yellow-500 flex items-center mb-1">
-            <img src="/images/icons/meso.png" alt="메소" className="w-3 mr-2" />
-            가격 (메소)
-          </div>
-          <input
-            type="text"
-            value={price}
-            onChange={(e) => {
-              const raw = e.target.value.replace(/\D/g, ""); // 숫자만 추출
-              const trimmed = raw.replace(/^0+(?!$)/, "");   // 앞자리 0 제거 (단, 0 하나는 유지)
-              setPrice(trimmed);
+        {/* 소울 옵션 */}
+        {item.item_equipment_slot === "무기" && editable && (
+          <SoulOptionEditor
+            value={{ template: soulTemplate, value: soulValue }}
+            onChange={({ template, value }) => {
+              setSoulTemplate(template);
+              setSoulValue(value);
             }}
-            className="w-full border px-2 py-1 rounded text-sm mt-1 text-black"
-          />*/}
-          <button onClick={handleSaveClick} className="mt-3 w-full py-2 bg-blue-500 hover:bg-blue-600 rounded text-sm text-white">
-            저장
-          </button>
+          />
+        )}
+
+        {/* 소울 옵션 렌더 */}
+        {item.item_equipment_slot === "무기" && !editable && (
+          <div className="mt-3 border-t border-gray-600 pt-2">
+            <div className="flex items-center mb-1">
+              <img src="/images/info/soul_weapon.png" alt="소울" className="w-3 mr-2" />
+              <p className="text-white">소울</p>
+            </div>
+            <p className="text-sm text-white ml-6">
+              {item.soul_option ? `▪ ${item.soul_option}` : "▪ 없음"}
+            </p>
+          </div>
+        )}
+
+        {/* 저장 버튼 */}
+        {editable && (
+          <div className="mt-4">
+            {/*<div className="text-sm text-yellow-500 flex items-center mb-1">
+              <img src="/images/icons/meso.png" alt="메소" className="w-3 mr-2" />
+              가격 (메소)
+            </div>
+            <input
+              type="text"
+              value={price}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, ""); // 숫자만 추출
+                const trimmed = raw.replace(/^0+(?!$)/, "");   // 앞자리 0 제거 (단, 0 하나는 유지)
+                setPrice(trimmed);
+              }}
+              className="w-full border px-2 py-1 rounded text-sm mt-1 text-black"
+            />*/}
+            <button onClick={handleSaveClick} className="mt-3 w-full py-2 bg-[#44B7CF] active:brightness-75 hover:brightness-110 rounded text-sm text-white">
+              저장
+            </button>
+          </div>
+        )}
+      </div>
+      {/* 주문서 모달 */}
+      <AnimatePresence>
+        <div className="absolute left-[calc(180px+450px+24px)] top-[30px] z-50">
+          {editable && showScrollModal && (
+            <ScrollModal 
+              item = {item}
+              setEtcOptions={setEtcOptions}
+              onApply={newEtcOption => {
+                setEtcOptions(newEtcOption);      // 확정 저장
+                setEquipment(prev => {
+                  const updated = {
+                    ...prev,
+                    [slot]: {
+                      ...prev[slot],
+                      item_etc_option: newEtcOption
+                    }
+                  };
+
+                  // 전투력 업데이트
+                  const newPower = calculatePower(
+                    Object.values(updated),
+                    character.class,
+                    character.baseStat,
+                    character.noPerStat,
+                    character.perStat,
+                    character.level
+                  );
+                  const scaledDiff = newPower - originalPower;
+                  setPowerDiff(scaledDiff);
+
+                  return updated;
+                });
+                setShowScrollModal(false);        // 모달 닫기
+              }}
+              onClose={() => {
+                setEtcOptions(etcOptionsBackup.current); // 원복
+                setShowScrollModal(false);               // 모달 닫기
+              }}
+            />
+          )}
         </div>
-      )}
-    </div>
+      </AnimatePresence>
+    </>
   );
 }

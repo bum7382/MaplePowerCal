@@ -1,8 +1,8 @@
-import { or } from "firebase/firestore/lite";
 import jobStat from "../data/jobStat.json";
 import starforceStatTable from "../data/starforceStatTable"
+import tyrantTable from "../data/starforceTyrantStatTable"
 
-export default function calculateStarforceStat(character_class, item, starforce){
+export default function calculateStarforceStat(character_class, item, starforce, isTyrant){
   
   const jobInfo = jobStat.find(j => j.class === character_class);
   if (!jobInfo) return 0;
@@ -23,110 +23,128 @@ export default function calculateStarforceStat(character_class, item, starforce)
   const slot = item.item_equipment_slot;
   const level = Number(item.item_base_option?.base_equipment_level || 0);
 
-  // 스타포스 15성 이하일 때
-  if(starforce > 0){
-    const limit = Math.min(starforce, 15);
+  if (isTyrant) {
+    const tyrantRow = tyrantTable.find(row =>
+      row.match.some(keyword => item.item_name.includes(keyword))
+    );
+    if (!tyrantRow) return { attack, magic, stat };
 
-    /* 스탯 증가량 */
-    for(let i = 0; i < limit; i++){
-      stat += (i < 5) ? 2 : 3;
-    }
-
-    /* 공/마 증가량 */
-    if(slot == "무기" || slot == "보조무기"){
-      for(let i = 0; i < limit; i++){
-        isMagicClass ? magic += Math.floor(magic / 50) + 1 : attack += Math.floor(attack / 50) + 1;
+    // stat: 1~5성까지만, attack: 1~15성까지
+    for (let i = 0; i < starforce; i++) {
+      if (i < tyrantRow.stat.length && typeof tyrantRow.stat[i] === "number") {
+        stat += tyrantRow.stat[i];
       }
-    }
-    if(slot == "장갑"){
-      for(let i = 0; i < starforce; i++){
-        if([5, 7, 9, 11, 13, 14, 15].includes(i)){
-          isMagicClass ? magic++ : attack++;
-        }
-      }
-    }
-
-    /* 기타 스탯 */
-    if(slot == "신발"){
-      for(let i = 0; i < limit; i++){
-        if(i < 12){
-          speed++;
-          jump++;
-        }
-        else if(i < 15){
-          speed += 2;
-          jump += 2;
-        }
-      }
-    }
-    if(slot == "무기" || slot == "보조무기"){
-      for(let i = 0; i < limit; i++){
-        if(i < 3){
-          max_hp += 5;
-          max_mp += 5;
-        }
-        else if(i < 6){
-          max_hp += 10;
-          max_mp += 10;
-        }
-        else if(i < 9){
-          max_hp += 20;
-          max_mp += 20;
-        }
-        else if(i < 15){
-          max_hp += 25;
-          max_mp += 25;
-        }
-      }
-    }
-    if(armorSlot.includes(slot) || accessorySlot.includes(slot)){
-      // 최대 HP 상승
-      if(slot != "신발" && slot != "장갑"){
-        for(let i = 0; i < limit; i++){
-          if(i < 3) max_hp += 5;
-          else if(i < 6) max_hp += 10;
-          else if(i < 9) max_hp += 20;
-          else if(i < 15) max_hp += 25;
-        }
-      }
-      // 방어력 상승
-      for(let i = 0; i < starforce; i++){
-        armor += Math.floor(armor / 20) + 1;
+      if (i < tyrantRow.attack.length && typeof tyrantRow.attack[i] === "number") {
+        attack += tyrantRow.attack[i];
+        magic += tyrantRow.attack[i];
       }
     }
   }
+  else{
+  // 스타포스 15성 이하일 때
+    if(starforce > 0){
+      const limit = Math.min(starforce, 15);
 
+      /* 스탯 증가량 */
+      for(let i = 0; i < limit; i++){
+        stat += (i < 5) ? 2 : 3;
+      }
 
-  // 스타포스 16성 이상 - 방어구 및 장신구
-  if(starforce > 15){
-    if(armorSlot.includes(slot) || accessorySlot.includes(slot)){
-      const sortedTable = [...starforceStatTable].sort((a, b) => a.level - b.level);
-      const table = [...sortedTable].reverse().find(row => level >= row.level);
-      if (!table) return;
+      /* 공/마 증가량 */
+      if(slot == "무기" || slot == "보조무기"){
+        for(let i = 0; i < limit; i++){
+          isMagicClass ? magic += Math.floor(magic / 50) + 1 : attack += Math.floor(attack / 50) + 1;
+        }
+      }
+      if(slot == "장갑"){
+        for(let i = 0; i < starforce; i++){
+          if([5, 7, 9, 11, 13, 14, 15].includes(i)){
+            isMagicClass ? magic++ : attack++;
+          }
+        }
+      }
 
-      for (let i = 15; i < starforce; i++) {
-        if(i < 22) stat += table.stat;
-        const idx = i - 15;
-        const bonus = table.armor?.[idx];
-        if (bonus != null) {
-          attack += bonus;
-          magic += bonus;
+      /* 기타 스탯 */
+      if(slot == "신발"){
+        for(let i = 0; i < limit; i++){
+          if(i < 12){
+            speed++;
+            jump++;
+          }
+          else if(i < 15){
+            speed += 2;
+            jump += 2;
+          }
+        }
+      }
+      if(slot == "무기" || slot == "보조무기"){
+        for(let i = 0; i < limit; i++){
+          if(i < 3){
+            max_hp += 5;
+            max_mp += 5;
+          }
+          else if(i < 6){
+            max_hp += 10;
+            max_mp += 10;
+          }
+          else if(i < 9){
+            max_hp += 20;
+            max_mp += 20;
+          }
+          else if(i < 15){
+            max_hp += 25;
+            max_mp += 25;
+          }
+        }
+      }
+      if(armorSlot.includes(slot) || accessorySlot.includes(slot)){
+        // 최대 HP 상승
+        if(slot != "신발" && slot != "장갑"){
+          for(let i = 0; i < limit; i++){
+            if(i < 3) max_hp += 5;
+            else if(i < 6) max_hp += 10;
+            else if(i < 9) max_hp += 20;
+            else if(i < 15) max_hp += 25;
+          }
+        }
+        // 방어력 상승
+        for(let i = 0; i < starforce; i++){
+          armor += Math.floor(armor / 20) + 1;
         }
       }
     }
 
-    // 스타포스 16성 이상 - 무기
-    if(slot == "무기" || slot == "보조무기"){
-      const sortedTable = [...starforceStatTable].sort((a, b) => a.level - b.level);
-      const table = [...sortedTable].reverse().find(row => level >= row.level);
-      if (!table) return;
+    // 스타포스 16성 이상 - 방어구 및 장신구
+    if(starforce > 15){
+      if(armorSlot.includes(slot) || accessorySlot.includes(slot)){
+        const sortedTable = [...starforceStatTable].sort((a, b) => a.level - b.level);
+        const table = [...sortedTable].reverse().find(row => level >= row.level);
+        if (!table) return;
 
-      for (let i = 15; i < starforce; i++) {
-        if(i < 22) stat += table.stat;
-        const idx = i - 15;
-        const bonus = table.weapon?.[idx];
-        if (bonus != null) {
-          isMagicClass ? magic += bonus : attack += bonus;
+        for (let i = 15; i < starforce; i++) {
+          if(i < 22) stat += table.stat;
+          const idx = i - 15;
+          const bonus = table.armor?.[idx];
+          if (bonus != null) {
+            attack += bonus;
+            magic += bonus;
+          }
+        }
+      }
+
+      // 스타포스 16성 이상 - 무기
+      if(slot == "무기" || slot == "보조무기"){
+        const sortedTable = [...starforceStatTable].sort((a, b) => a.level - b.level);
+        const table = [...sortedTable].reverse().find(row => level >= row.level);
+        if (!table) return;
+
+        for (let i = 15; i < starforce; i++) {
+          if(i < 22) stat += table.stat;
+          const idx = i - 15;
+          const bonus = table.weapon?.[idx];
+          if (bonus != null) {
+            isMagicClass ? magic += bonus : attack += bonus;
+          }
         }
       }
     }

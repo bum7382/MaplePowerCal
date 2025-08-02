@@ -25,7 +25,7 @@ export default function NoticeModal({ onClose, notices }) {
                   className="py-4 px-4 cursor-pointer hover:bg-[#f0faff] transition"
                   onClick={() => setSelectedIdx(idx)}
                 >
-                  <span className="font-bold text-[#44B7CF] mr-2">[Notice]</span>
+                  <span className="font-bold text-[#44B7CF] mr-2">[{notice.kind}]</span>
                   <span className="font-medium">{notice.title}</span>
                   <span className="float-right text-xs text-gray-400">{notice.date}</span>
                 </li>
@@ -50,9 +50,9 @@ export default function NoticeModal({ onClose, notices }) {
           className="absolute top-3 left-4 text-xl text-gray-500 hover:text-black font-bold"
           onClick={() => setSelectedIdx(null)}
         >←</button>
-        <h2 className="text-[20px] font-bold font-dotum mb-[-1px] text-[#44B7CF] mt-5">{notice.title}</h2>
-        <div className="text-xs text-gray-400 mb-4">{notice.date}</div>
-        <div className="whitespace-pre-line text-gray-900 text-base leading-relaxed max-h-[45vh] overflow-y-auto mb-6">
+        <h2 className="text-[25px] font-maple mb-[-1px] text-[#44B7CF] mt-5 select-text">{notice.title}</h2>
+        <div className="text-xs text-gray-400 mb-4 select-text">{notice.date}</div>
+        <div className="whitespace-pre-line text-gray-900 text-base leading-relaxed max-h-[45vh] overflow-y-auto mb-6 font-dotum select-text">
           {notice.text}
         </div>
         <button

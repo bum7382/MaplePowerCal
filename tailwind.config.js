@@ -8,6 +8,7 @@ export default {
         kohi: ['"KOHIBaeum"', 'sans-serif'],
         galmuri: ['Galmuri9', 'sans-serif'],
         dotum: ['KoPubWorldDotum', 'sans-serif'],
+        dotumLight: ['KoPubWorldDotumLight', 'sans-serif'],
       },
       animation: {
       'fade-in': 'fadeIn 0.3s ease-out',
