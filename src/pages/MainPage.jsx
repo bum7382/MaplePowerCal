@@ -309,17 +309,22 @@ export default function MainPage() {
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
           <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-50 px-4 py-1 rounded
                           max-sm:w-[300px]">
-            <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2] 
+            <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2]
                             max-sm:-top-[23px] max-sm:left-[35%] max-sm:text-center max-sm:text-black">
               전투력 증가량:
             </span>
-            <span
-              className={`
-                font-kohi text-[23px]
-                ${powerDiff < 0 ? "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent" : ""}
-                ${powerDiff >= 0 ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent" : ""}
-              `}
-            >
+           <span
+            className={
+              "font-kohi text-[23px] " +
+              (window.innerWidth <= 640
+                ? (powerDiff < 0 ? "text-[#FF006E]" : "text-white")
+                : (powerDiff < 0
+                    ? "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent"
+                    : "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent"
+                  )
+              )
+            }
+          >
               {powerDiff === 0
                 ? "0"
                 : `${powerDiff > 0 ? "+" : "-"}${formatKoreanNumber(powerDiff)}`}
@@ -329,7 +334,7 @@ export default function MainPage() {
         
         {/* 장비창 인벤토리 창 */}
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[88%] left-[4%] w-[40%]" />
-        <div draggable="false" className="absolute top-[27%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center max-sm:top-[30%]">
+        <div draggable="false" className="absolute top-[29%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center max-sm:top-[30%]">
           {/* 캐릭터 이미지 */}
           <img src={character?.image || "/images/default_character.png"} 
                draggable="false" 

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {tutorialScripts} from "../utils/scripts.js"
+import {tutorialScripts} from "../data/scripts.js"
 
 function TypingText({ text, speed = 60, skip, onDone }) {
   const [displayed, setDisplayed] = useState(""); // 화면에 보여줄 글자

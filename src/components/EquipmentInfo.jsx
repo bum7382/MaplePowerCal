@@ -110,10 +110,9 @@ export default function EquipmentInfo({
   // 장비 바뀌면 옵션 초기화
   useEffect(() => {
     if (!item) return;
-    
     setStarforce(Number(item.starforce || 0));
     setStarforceOption({ ...item.item_starforce_option });
-
+    
     setAddOptions({ ...item.item_add_option });  // 추가옵션
     setEtcOptions({ ...item.item_etc_option });  // 주문서작
 
@@ -253,10 +252,10 @@ export default function EquipmentInfo({
       // % 포함된 경우 처리
       if (clean.includes("%")) {
         const parts = clean.split("%");
-        let digits = parts[0].replace(/^0+(?!$)/, "").slice(0, 3); // 앞자리 0 제거 + 3자리 제한
+        let digits = parts[0].replace(/^0+(?!$)/, "").slice(0, 4); // 앞자리 0 제거 + 3자리 제한
         clean = allowPercent ? `${digits}%` : digits; // % 허용되면 붙이고, 아니면 제거
       } else {
-        clean = clean.replace(/^0+(?!$)/, "").slice(0, 3); // 숫자만 있을 경우 처리
+        clean = clean.replace(/^0+(?!$)/, "").slice(0, 4); // 숫자만 있을 경우 처리
       }
 
       // 상태 및 객체 반영
@@ -294,7 +293,7 @@ export default function EquipmentInfo({
                     <>
                     <span className="text-[#AFADFF] text-s"> +</span>
                     <input
-                      className="w-[30px] text-s bg-transparent border-b border-[#AFADFF] text-[#AFADFF] text-right"
+                      className="w-[40px] text-s bg-transparent border-b border-[#AFADFF] text-[#AFADFF] text-right"
                       value={etcOptions[key] || ""}
                       onChange={(e) => handleChange("etc", e.target.value)}
                     />
@@ -306,7 +305,7 @@ export default function EquipmentInfo({
                     <>
                       <span className="text-[#FFCC00] text-s"> +</span>
                       <input
-                        className="w-[30px] text-s bg-transparent border-b border-[#FFCC00] text-[#FFCC00] text-right"
+                        className="w-[40px] text-s bg-transparent border-b border-[#FFCC00] text-[#FFCC00] text-right"
                         value={starforceOption[key] || ""}
                         onChange={(e) => handleChange("star", e.target.value)}
                       />
@@ -316,7 +315,7 @@ export default function EquipmentInfo({
                   {showAddInput && (<>
                   <span className="text-[#0AE3AD] text-s"> +</span>
                   <input
-                    className="w-[30px] text-s bg-transparent border-b border-[#0AE3AD] text-[#0AE3AD] text-right"
+                    className="w-[40px] text-s bg-transparent border-b border-[#0AE3AD] text-[#0AE3AD] text-right"
                     value={addOptions[key] || ""}
                     onChange={(e) => handleChange("add", e.target.value)}
                   />
@@ -538,11 +537,23 @@ export default function EquipmentInfo({
           <div className="text-sm text-right w-[320px]">
             <p className="mt-2 text-[#85919F] text-[15px] max-sm:text-[10px]">전투력 증가량</p>
             <p
-              className={`mt-3 text-[27px] font-kohi whitespace-nowrap max-sm:text-[17px] max-sm:mt-1 leading-[1.2] ${
-                !hasChanged ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent" : 
-                  diff >= 0 ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent" 
-                  : "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent"
-              }`}
+              className={
+                "mt-3 text-[27px] font-kohi whitespace-nowrap max-sm:text-[17px] max-sm:mt-1 leading-[1.2] " +
+                (
+                  window.innerWidth <= 640
+                    ? // 모바일
+                      (diff < 0
+                        ? "text-[#FF006E]"
+                        : "text-white")
+                    : // PC
+                      (!hasChanged
+                        ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent"
+                        : diff >= 0
+                          ? "bg-gradient-to-b from-[#ffffff] to-[#D5E1EA] bg-clip-text text-transparent"
+                          : "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent"
+                      )
+                )
+              }
             >
               {!hasChanged
                 ? "현재 장착 중인 장비"
@@ -570,15 +581,17 @@ export default function EquipmentInfo({
               장비 수정하기
             </button>
           )}
-          { editable &&(
-          <button 
-            className="text-[#B7BFC5] active:brightness-75 hover:text-white transition"
-            onClick = {() => {
-              setShowScrollModal(!showScrollModal)
-              etcOptionsBackup.current = { ...etcOptions };
-            }}>
-            주문서 보기
-          </button>)}
+          {editable && (
+            <button
+              className={`transition active:brightness-75 max-sm:text-[14px] hover:brightness-120 transition ${showScrollModal ? "text-[#B7BFC5]" : "text-[#44B7CF]"}`}
+              onClick={() => {
+                setShowScrollModal(!showScrollModal)
+                etcOptionsBackup.current = { ...etcOptions };
+              }}
+            >
+              주문서 보기
+            </button>
+          )}
         </div>
 
         {/* 추가옵션 */}
@@ -677,46 +690,25 @@ export default function EquipmentInfo({
       </div>
       {/* 주문서 모달 */}
       <AnimatePresence>
-        <div className="absolute left-[calc(180px+450px+24px)] top-[30px] z-50">
+        <div className={"absolute left-[calc(180px+450px+24px)] top-[30px] z-50 max-sm:w-[90%] max-sm:left-1/2 max-sm:-translate-x-1/2 " + (showInventory ? "max-sm:top-[188%]" : "max-sm:top-[175%]")}>
           {editable && showScrollModal && (
             <ScrollModal 
               item = {item}
               setEtcOptions={setEtcOptions}
               onApply={newEtcOption => {
-                setEtcOptions(newEtcOption);      // 확정 저장
-                setEquipment(prev => {
-                  const updated = {
-                    ...prev,
-                    [slot]: {
-                      ...prev[slot],
-                      item_etc_option: newEtcOption
-                    }
-                  };
-
-                  // 전투력 업데이트
-                  const newPower = calculatePower(
-                    Object.values(updated),
-                    character.class,
-                    character.baseStat,
-                    character.noPerStat,
-                    character.perStat,
-                    character.level
-                  );
-                  const scaledDiff = newPower - originalPower;
-                  setPowerDiff(scaledDiff);
-
-                  return updated;
-                });
+                setEtcOptions(prev => ({ ...prev, ...newEtcOption }));      // 확정 저장
                 setShowScrollModal(false);        // 모달 닫기
               }}
               onClose={() => {
-                setEtcOptions(etcOptionsBackup.current); // 원복
+                setEtcOptions(etcOptionsBackup.current); // 원본값 복구
                 setShowScrollModal(false);               // 모달 닫기
               }}
             />
           )}
         </div>
       </AnimatePresence>
+
     </>
+
   );
 }

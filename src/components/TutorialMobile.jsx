@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSwipeable } from "react-swipeable";
 
 export default function TutorialMobile({onClose }) {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(0);
-  const totalSteps = 16;
+  const totalSteps = 25;
 
   // 공통: 이벤트에서 x좌표 구하는 함수
   const getX = (e) => {
@@ -12,6 +13,7 @@ export default function TutorialMobile({onClose }) {
     if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientX;
     return e.clientX ?? 0;
   };
+  
 
   const handleTouch = (e) => {
     const x = getX(e);
@@ -32,6 +34,26 @@ export default function TutorialMobile({onClose }) {
       }
     }
   };
+
+  // swipe 이벤트 연결
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (step < totalSteps) {
+        setDirection(1);
+        setStep(s => s + 1);
+      } else {
+        onClose && onClose();
+      }
+    },
+    onSwipedRight: () => {
+      if (step > 1) {
+        setDirection(-1);
+        setStep(s => s - 1);
+      }
+    },
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true // PC 마우스도 지원
+  });
 
   // 애니메이션 설정
   const variants = {
@@ -55,9 +77,10 @@ export default function TutorialMobile({onClose }) {
 
   return (
     <div
+      {...handlers}
       className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center font-dotum"
       onClick={handleTouch}
-      style={{ touchAction: "manipulation" }}
+      style={{ touchAction: "pan-y" }}
     >
       <div className="relative w-[95vw] h-[90vh] flex items-center justify-center overflow-hidden">
         <AnimatePresence custom={direction} initial={false}>
