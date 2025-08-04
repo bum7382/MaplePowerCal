@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import magicScroll from '../data/MagicScroll.json';
 import spellScroll from "../data/SpellScroll.json";
 import { useToast } from "../utils/toastContext";
+import jobStat from "../data/jobStat.json";
 
 // 주문서 표현식: json-API 순
 const ETC_KEY_MAP = {
@@ -20,7 +21,11 @@ const ETC_KEY_MAP = {
 };
 
 // 아이템 부위/레벨에 맞는 주문서 목록 추출 함수
-function getScrollOptions(item, type = "scroll") {
+function getScrollOptions(item, type = "scroll", character_class) {
+	const jobInfo = jobStat.find(j => j.class === character_class);
+	const mainStat = jobInfo?.main_stat || "STR";
+	const isMagicClass = mainStat === "INT";
+
 	// 전용 주문서
 	if (type === "spell") {
 		// 부위에 해당하는 주문서만 필터링
@@ -65,11 +70,25 @@ function getScrollOptions(item, type = "scroll") {
           Object.keys(value).forEach(k => {
             if (k !== "스탯") v[k] = value[k];
           });
+					let name;
+					if (["무기", "보조무기"].includes(item.item_equipment_slot)) {
+						if (statType === "INT") {
+							name = `${scroll}% 마력(지력) 주문서`;
+						} else if (statType === "STR") {
+							name = `${scroll}% 공격력(힘) 주문서`;
+						} else if (statType === "DEX") {
+							name = `${scroll}% 공격력(민첩) 주문서`;
+						} else if (statType === "LUK") {
+							name = `${scroll}% 공격력(운) 주문서`;
+						}
+					} else {
+						name = `${scroll}% ${STAT_KR[statType]} 주문서`;
+					}
           result.push({
             type: "stat",
             scroll,
             statType,
-            name: `${scroll}% ${STAT_KR[statType]} 주문서`,
+            name,
             value: v,
           });
         });
@@ -124,14 +143,14 @@ function getSortKey(scroll) {
   return [3, 0, 0];
 }
 
-export default function ScrollModal({item, setEtcOptions, onClose, onApply}) {
+export default function ScrollModal({item, character_class, setEtcOptions, onClose, onApply}) {
 	const [selectedScroll, setSelectedScroll] = useState(0);	// 현재 선택한 주문서 종류
 	const scroll_upgrade = Number(item.scroll_upgrade);	// 주문서 사용 가능 횟수
 	const [selectedType, setSelectedType] = useState("scroll");	// 주문의 흔적 or 전용 주문서 선택 여부
 	const [scrollTryIdx, setScrollTryIdx] = useState(-1);	// 주문서 슬롯 인덱스
 	const [slotScrolls, setSlotScrolls] = useState(Array(Number(scroll_upgrade) || 0).fill(null));	// 주문서 슬롯 별 적용된 주문서
 	const [hoveredIdx, setHoveredIdx] = useState(null);	// hover 중인 주문서 슬롯 인덱스
-	const scrollList = getScrollOptions(item, selectedType);	// 전체 주문서 목록
+	const scrollList = getScrollOptions(item, selectedType, character_class);	// 전체 주문서 목록
 	const [spellValueSelect, setSpellValueSelect] = useState(null);	// 선택한 전용 주문서 값
 
 	const { showToast } = useToast(); // 토스트

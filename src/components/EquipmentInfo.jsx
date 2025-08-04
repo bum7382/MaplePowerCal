@@ -694,6 +694,7 @@ export default function EquipmentInfo({
           {editable && showScrollModal && (
             <ScrollModal 
               item = {item}
+              character_class = {character.class}
               setEtcOptions={setEtcOptions}
               onApply={newEtcOption => {
                 setEtcOptions(prev => ({ ...prev, ...newEtcOption }));      // 확정 저장

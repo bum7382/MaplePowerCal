@@ -108,16 +108,6 @@ export default async function handler(req, res) {
     const combatPowerObj = stat.final_stat ? stat.final_stat.find(s => s.stat_name === "전투력") : null;
     const combatPower = combatPowerObj ? combatPowerObj.stat_value : null;
 
-    const powerSkillNames = ["정령의 축복", "여제의 축복", "파괴의 얄다바오트"];
-    // 펫 스킬 찾기
-    const filteredSkills = skill.character_skill
-      ? skill.character_skill.filter(
-          (s) =>
-            s.skill_name.includes("Lv") ||
-            powerSkillNames.includes(s.skill_name)
-        )
-      : [];
-
     // 하이퍼 스탯 프리셋 1만 추출
     const presetNo = hyperStat.use_preset_no || "1";
     const presetKey = `hyper_stat_preset_${presetNo}`;
@@ -130,12 +120,16 @@ export default async function handler(req, res) {
       character_level: infoBody.character_level,  // 캐릭터 레벨
       character_image: infoBody.character_image,  // 캐릭터 이미지 URL
       combat_power: combatPower,                  // 전투력
+      item_preset:  item.preset_no,               // 적용하고 있는 장비 프리셋 번호
       item: item.item_equipment,                  // 장비
+      item_preset1: item.item_equipment_preset_1, // 장비 프리셋1
+      item_preset2: item.item_equipment_preset_2, // 장비 프리셋2
+      item_preset3: item.item_equipment_preset_3, // 장비 프리셋3
       title: item.title,                          // 칭호
       hyperStat: preset,                          // 하이퍼 스탯
       ability: ability.ability_info,              // 어빌리티
       symbol: symbol.symbol,                      // 심볼 정보
-      skill: filteredSkills,                      // 0차 스킬
+      skill: skill.character_skill,               // 0차 스킬
       hexa_stat: {                                // 헥사 스텟
         character_hexa_stat_core: hexaStat.character_hexa_stat_core,
         character_hexa_stat_core_2: hexaStat.character_hexa_stat_core_2,

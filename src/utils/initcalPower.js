@@ -335,17 +335,48 @@ function hyperStatPower(hyperStat, baseStat, noPerStat, perStat) {
 
 // 7. 스킬
 function skillPower(skill, baseStat, noPerStat) {
-  skill.forEach(({ skill_effect }) => {
+  const powerSkillNames = ["정령의 축복", "여제의 축복"];
+  skill.forEach(({ skill_name, skill_effect }) => {
     if (!skill_effect) return;
 
-    // 모든 숫자 추출 (공격력, 마력 순서)
-    // 1. "공격력 N" 추출
-    const atkMatch = skill_effect.match(/공격력\s*(\d+)/);
-    if (atkMatch) baseStat.atk += Number(atkMatch[1]);
+    // 여러 줄로 들어온 경우 한 줄씩 체크
+    const lines = skill_effect.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    let m;
 
-    // 2. "마력 N" 추출
-    const magicMatch = skill_effect.match(/마력\s*(\d+)/);
-    if (magicMatch) baseStat.magic += Number(magicMatch[1]);
+    // 펫 스킬, 정령의 축복, 여제의 축복
+    if (powerSkillNames.includes(skill_name) || skill_name.includes("Lv")) {
+      lines.forEach(line => {
+        const m = line.match(/^공격력\s*(\d+),\s*마력\s*(\d+)\s*증가$/);
+        if (m) {
+          baseStat.atk = (baseStat.atk || 0) + Number(m[1]);
+          baseStat.magic = (baseStat.magic || 0) + Number(m[2]);
+        }
+      });
+      return;
+    }
+
+    // 이벤트 스킬
+    lines.forEach(line => {
+      m = line.match(/^공격력\/마력\s*(\d+)\s*증가$/);
+      if (m) {
+        baseStat.atk += Number(m[1]);
+        baseStat.magic += Number(m[1]);
+      }
+      m = line.match(/^보스 몬스터  데미지\s*(\d+)%\s*증가$/);
+      if (m) baseStat.boss_damage += Number(m[1]);
+      m = line.match(/^보스 몬스터 공격 시 데미지\s*(\d+)%\s*증가$/);
+      if (m) baseStat.boss_damage += Number(m[1]);
+      m = line.match(/^크리티컬 데미지\s*(\d+)%\s*증가$/);
+      if (m) baseStat.crit_damage += Number(m[1]);
+      m = line.match(/^올스탯\s*(\d+)\s*증가$/);
+      if (m) {
+        ["STR", "DEX", "INT", "LUK"].forEach(stat => {
+          baseStat[stat]+= Number(m[1]);
+        });
+      }
+      m = line.match(/^최대 HP\/MP\s*(\d+)\s*증가$/);
+      if (m) baseStat.HP += Number(m[1]);
+    });
   });
 }
 

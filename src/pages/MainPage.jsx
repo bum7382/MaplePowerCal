@@ -54,6 +54,10 @@ export default function MainPage() {
   const [showInventory, setShowInventory] = useState(false);  // 인벤토리 표시 여부
   const [hoveredInventoryItem, setHoveredInventoryItem] = useState(null); // 인벤토리 아이템 호버 상태
 
+  // 프리셋
+  const [preset, setPreset] = useState(1);
+  const [applyPreset, setApplyPreset] = useState(false);
+
   // 기타 상태
   const navigate = useNavigate(); // 내비게이터
   const { showToast } = useToast(); // 토스트
@@ -177,6 +181,68 @@ export default function MainPage() {
     setInfoLocked(false);
   };
 
+  /* ===== 프리셋 ===== */
+  useEffect(() => {
+    if (!character) return;
+    if (character.preset_no !== undefined) {
+      setPreset(character.preset_no);
+    }
+  }, [character]);
+
+  // 프리셋으로 장비 변경
+  function mapPresetEquipmentToSlot(presetEquipment) {
+    // presetEquipment: 배열
+    const equipmentMap = {};
+    const countMap = {};
+    for (const item of presetEquipment) {
+      let raw = item.item_equipment_slot || item.item_equipment_part;
+      if (!raw) continue;
+      if (raw === "펜던트") {
+        countMap["펜던트"] = (countMap["펜던트"] || 0) + 1;
+        raw = countMap["펜던트"] === 1 ? "펜던트" : "펜던트2";
+      } else if (raw === "반지") {
+        countMap["반지"] = countMap["반지"] || 1;
+        raw = `반지${countMap["반지"]}`;
+        countMap["반지"] += 1;
+      }
+      equipmentMap[raw] = item;
+    }
+    return equipmentMap;
+  }
+
+  // 프리셋 버튼 핸들러
+  function handlePresetSelect(n) {
+    setPreset(n); // 버튼 스타일, UI
+    let presetEquipment;
+    if (n === 1) presetEquipment = character.equipment_preset_1;
+    if (n === 2) presetEquipment = character.equipment_preset_2;
+    if (n === 3) presetEquipment = character.equipment_preset_3;
+    console.log(presetEquipment)
+
+    if (!presetEquipment) return;
+
+    const equipmentMap = mapPresetEquipmentToSlot(presetEquipment);
+    setEquipment(equipmentMap); // 이게 슬롯에 즉시 반영
+  }
+
+  // 프리셋 적용 핸들러
+  function handleApplyPreset() {
+    // 기준 장비 업데이트
+    setOriginalEquipment(equipment);
+    
+    // 바뀐 장비 프리셋으로 전투력 재계산
+    const newPower = calculatePower(
+      Object.values(equipment),
+      character.class,
+      character.baseStat,
+      character.noPerStat,
+      character.perStat,
+      character.level
+    );
+    setOriginalPower(newPower);
+    setPowerDiff(0); // 적용 시 전투력 변화량 0으로
+  }
+
   /* ===== 인벤토리 ===== */
   // 인벤토리 로컬 스토리지에 저장
   useEffect(() => {
@@ -268,7 +334,7 @@ export default function MainPage() {
   const slotStyle = "absolute w-[48px] h-[48px] bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
   const slots = [
     ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 7.9 })),
-    ...["눈장식", "귀고리", "펜던트", "펜던트2", "얼굴장식"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 20.1 })),
+    ...["얼굴장식", "눈장식", "귀고리", "펜던트", "펜던트2"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 20.1 })),
     ...["모자", "상의", "하의", "어깨장식"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 69 })),
     ...["망토", "장갑", "신발", "훈장", "기계 심장", "뱃지"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 81.2 })),
     { name: "무기", top: 63.2, left: 32.3 },
@@ -372,6 +438,38 @@ export default function MainPage() {
             </button>
           </div>
         </div>
+         
+        {/* 프리셋 버튼 */}
+        <div className="flex gap-2 absolute left-[52.5%] top-[85%] max-sm:top-[80%] z-50">
+          {[1, 2, 3].map(n => (
+            <button
+              key={n}
+              className="items-center focus:outline-none"
+              onClick={() => handlePresetSelect(n)}
+              style={
+                preset === n
+                  ? { border: '2px solid #fff', borderRadius: '5px', boxShadow: '0 0 3px 1px #44B7CF40, 0 0 18px 6px #44B7CF40' }
+                  : { border: '2px solid transparent', borderRadius: '5px' }
+              }
+            >
+              <img
+                src={`/images/inventory/preset${n}${preset === n ? '_pressed' : ''}.png`}
+                alt={`preset${n}`}
+                className="w-[100%] transition hover:brightness-110 active:brightness-90"
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* 프리셋 적용 버튼 */}
+        <button
+          onClick={handleApplyPreset}
+          className="absolute top-[84.7%] left-[77%] items-center rounded z-50 hover:brightness-110 active:brightness-90">
+          <img
+            src="/images/inventory/적용.png" alt="프리셋 적용" className=""
+          />
+        </button>
+        
 
         {/* 처음으로 버튼 */}
         <button
@@ -381,6 +479,9 @@ export default function MainPage() {
         >
           처음으로
         </button>
+
+        
+
 
         {/* 장비 슬롯 */}
         {slots.map(({ name, top, left }) => (
@@ -496,7 +597,7 @@ export default function MainPage() {
             {/* 전체 초기화 버튼 */}
             <button
               onClick={handleResetAllEquipment}
-              className="bg-red-600 w-[90px] h-[30px] rounded text-[13px] font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center
+              className="bg-red-600 w-[90px] h-[30px] rounded text-[13px] font-galmuri text-white active:brightness-75 hover:brightness-110 transition text-center
                          max-sm:text-[9px] max-sm:w-[60px] max-sm:h-[20px]"
             >
               전체 초기화

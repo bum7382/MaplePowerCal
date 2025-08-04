@@ -39,6 +39,10 @@ export async function fetchCharacterByName(name) {
       baseStat: baseStat,             // 기본 스탯
       noPerStat: noPerStat,           // % 미적용 스탯
       perStat: perStat,               // % 스탯
+      preset_no: result.item_preset,  // 장비 프리셋 번호
+      equipment_preset_1: result.item_preset1,  // 1번 프리셋 장비
+      equipment_preset_2: result.item_preset2,  // 2번 프리셋 장비
+      equipment_preset_3: result.item_preset3,  // 3번 프리셋 장비
     };
 
     return mappedChar;
