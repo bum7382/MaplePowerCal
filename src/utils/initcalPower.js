@@ -8,8 +8,8 @@ function basicPower(character_level, character_class, baseStat, noPerStat){
   if(character_class == "데몬어벤져") {baseStat.pure_HP += 545 + 90 * character_level; return;}
   if (Array.isArray(mainStat)) {
   // 제논: STR, DEX, LUK 모두 동일한 방식으로 세팅
-  mainStat.forEach(stat => {
-    baseStat[stat] += 18 + 5 * character_level;
+    mainStat.forEach(stat => {
+      baseStat[stat] += 18 + 5 * character_level;
     });
   } else {
     baseStat[mainStat] += 18 + 5 * character_level;
@@ -504,10 +504,10 @@ function willingnessPower(willingness_level, baseStat){
 
 export function initcalPower(character){
   const baseStat = {
-    STR: 4,
-    DEX: 4,
-    INT: 4,
-    LUK: 4,
+    STR: 0,
+    DEX: 0,
+    INT: 0,
+    LUK: 0,
     pure_HP: 9,
     HP: 0,
     atk: 0,

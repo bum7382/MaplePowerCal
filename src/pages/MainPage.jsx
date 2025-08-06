@@ -240,6 +240,8 @@ export default function MainPage() {
     );
     setOriginalPower(newPower);
     setPowerDiff(0); // 적용 시 전투력 변화량 0으로
+    setSlotColors({});
+    setSelectedSlot(null);
 
     showToast("장비 프리셋이 변경되었습니다.", "success")
   }
