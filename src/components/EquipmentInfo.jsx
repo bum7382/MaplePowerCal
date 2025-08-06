@@ -169,7 +169,7 @@ export default function EquipmentInfo({
           key={i}
           src={filled ? "/images/info/starforce.png" : "/images/info/starforce_empty.png"}
           alt="★"
-          className="w-3 h-3 cursor-pointer"
+          className="w-3 h-3 cursor-custom"
           onClick={() => {
             if (!editable) return;
             const next = i + 1 === current ? i : i + 1;

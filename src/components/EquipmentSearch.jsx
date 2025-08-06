@@ -241,13 +241,13 @@ export default function EquipmentSearch({ slot, onSelectItem, character_class })
           filteredResults.map((item) => (
             <div
                 key={item.id}
-                className="flex items-center gap-2 p-2 bg-gray-800 rounded text-sm hover:bg-gray-700 cursor-pointer"
+                className="flex items-center gap-2 p-2 bg-gray-800 rounded text-sm hover:bg-gray-700 cursor-custom"
                 onClick={() => handleItemSelect(item.id)} // 선택 시 처리
             >
                 <img
                 src={`https://maplestory.io/api/KMS/389/item/${item.id}/icon`}
                 alt={item.name}
-                className="w-8 h-8"
+                className="w-8 h-8 cursor-custom"
                 />
                 <span>{item.name || "이름 없음"}</span>
             </div>

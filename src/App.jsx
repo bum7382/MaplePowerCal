@@ -33,9 +33,9 @@ function App() {
                   <img src="/images/icons/카카오톡.png" alt="카카오톡" className="select-none w-10 h-10 inline-block hover:brightness-110 active:brightness-90" />
                 </a>
                 {/* 유튜브 */}
-                {/*<a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" title="유튜브">
+                <a href="https://youtu.be/Pt2Lr_gpfuQ" target="_blank" rel="noopener noreferrer" title="유튜브">
                   <img src="/images/icons/유튜브.png" alt="유튜브" className="select-none w-10 h-10 inline-block hover:brightness-110 active:brightness-90" />
-                </a>*/}
+                </a>
               </div>
 
               {/* 글씨 영역 */}

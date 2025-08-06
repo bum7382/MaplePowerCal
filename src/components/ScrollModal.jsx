@@ -511,6 +511,7 @@ export default function ScrollModal({item, character_class, setEtcOptions, onClo
 					onClick={() => {
 						const etcOption = sumEtcOptionFromArray(slotScrolls);
 						onApply?.(etcOption);
+						showToast("주문서 사용이 완료되었습니다.", "success")
 					}}
 				>
 				</button>
