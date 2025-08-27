@@ -130,11 +130,7 @@ export default async function handler(req, res) {
       ability: ability.ability_info,              // 어빌리티
       symbol: symbol.symbol,                      // 심볼 정보
       skill: skill.character_skill,               // 0차 스킬
-      hexa_stat: {                                // 헥사 스텟
-        character_hexa_stat_core: hexaStat.character_hexa_stat_core,
-        character_hexa_stat_core_2: hexaStat.character_hexa_stat_core_2,
-        character_hexa_stat_core_3: hexaStat.character_hexa_stat_core_3
-      },
+      hexa_stat: hexaStat,                        // 헥사 스텟
       union: {                                    // 유니온
         union_raider: union.union_raider_stat,
         union_occupied: union.union_occupied_stat

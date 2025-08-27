@@ -19,7 +19,7 @@ export async function fetchCharacterByName(name) {
       ability: result.ability,        // 어빌리티
       symbol: result.symbol,          // 심볼 정보
       skill: result.skill,            // 0차 스킬
-      hexa_stat: result.hexa_stat,    // 헥사스킬
+      hexa_stat: result.hexa_stat,    // 헥사 스탯
       union: result.union,            // 유니온
       artifact: result.artifact,      // 아티팩트
       champion: result.champion,      // 유니온 챔피언
@@ -43,8 +43,9 @@ export async function fetchCharacterByName(name) {
       equipment_preset_1: result.item_preset1,  // 1번 프리셋 장비
       equipment_preset_2: result.item_preset2,  // 2번 프리셋 장비
       equipment_preset_3: result.item_preset3,  // 3번 프리셋 장비
+      hexa_stat: result.hexa_stat,  // 헥사 스탯
     };
-
+    console.log(mappedChar)
     return mappedChar;
   } catch (err) {
     console.log(err)

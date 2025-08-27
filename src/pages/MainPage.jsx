@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getCachedCharacter, setCachedCharacter, removeCachedCharacter } from "../utils/charCache";
 import TutorialMobile from "../components/TutorialMobile.jsx";
 import { AnimatePresence, motion } from "framer-motion";
+import HexaStat from "../components/HexaStat.jsx";
 
 
 export default function MainPage() {
@@ -57,6 +58,9 @@ export default function MainPage() {
 
   // 프리셋
   const [preset, setPreset] = useState(1);
+
+  // 헥사스탯
+  const [showHexaStat, setShowHexaStat] = useState(false);
 
   // 기타 상태
   const navigate = useNavigate(); // 내비게이터
@@ -403,18 +407,18 @@ export default function MainPage() {
         
         {/* 장비창 인벤토리 창 */}
         <img src="/images/inventory/equipment_info.png" draggable="false" className="absolute bottom-[88%] left-[4%] w-[40%]" />
-        <div draggable="false" className="absolute top-[29%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center max-sm:top-[30%]">
+        <div draggable="false" className="absolute top-[2%] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
           {/* 캐릭터 이미지 */}
           <img src={character?.image || "/images/default_character.png"} 
                draggable="false" 
-               className="w-[7vw] max-w-none max-sm:w-full" 
+               className="w-[180%] object-contain object-top [clip-path:inset(30%_30%_25%_30%)] max-w-none" 
                onMouseEnter={() => setShowCalPower(true)}
                onMouseLeave={() => setShowCalPower(false)}
           />
 
           {/* 전투력 표시 툴팁 */}
           {showCalPower && (
-            <div className="absolute bottom-[125%] left-1/2 -translate-x-1/2 ml-2 px-3 py-1 bg-[#1F2735] bg-opacity-60 text-white 
+            <div className="absolute bottom-[73%] left-1/2 -translate-x-1/2 ml-2 px-3 py-1 bg-[#1F2735] bg-opacity-60 text-white 
             text-xs rounded shadow-lg whitespace-nowrap z-20 font-galmuri text-center">
               계산된 기본 전투력: {formatKoreanNumber(originalPower) || "0"} <br />
               원본 전투력: {formatKoreanNumber(character.power) || "0"}
@@ -422,7 +426,7 @@ export default function MainPage() {
           )}
 
           {/* 캐릭터 이름 & 즐겨찾기 */}
-          <div className="flex flex-row items-center space-x-1">
+          <div className="absolute flex flex-row items-center space-x-1 top-[72%]">
             {/* 캐릭터 이름 */}
             <span className="mt-1 px-3 py-0.5 rounded-full bg-[#44B7CF] text-white text-sm font-galmuri relative -top-[5px]
                             max-sm:text-[9px] max-sm:py-[0.01px]">
@@ -669,9 +673,18 @@ export default function MainPage() {
 
         
         {/* 인벤토리 아이콘 */}
-        <button className="absolute bottom-[1.2%] left-[3%] w-[10%] active:brightness-75 hover:brightness-125 transition max-sm:w-[7%]"
+        <button className="absolute bottom-[1.2%] left-[3%] w-[10%] transition max-sm:w-[7%]"
           onClick={() => setShowInventory((prev) => !prev)}>
-          <img src="/images/icons/back_normal.png" draggable="false"/>
+          <img src="/images/icons/bag_normal.png" draggable="false"
+            className="custom-cursor hover:content-[url('/images/icons/bag_hover.png')] active:content-[url('/images/icons/bag_pressed.png')]"/>
+        </button>
+
+        {/* 헥사스탯 아이콘 */}
+        <button className="absolute bottom-[1.2%] left-[12%] w-[10%] transition max-sm:w-[7%]"
+          onClick={() => setShowHexaStat((prev) => !prev)}>
+          <img 
+            src="/images/hexa/헥사메뉴.normal.png" draggable="false"
+            className="custom-cursor hover:content-[url('/images/hexa/헥사메뉴.hover.png')] active:content-[url('/images/hexa/헥사메뉴.pressed.png')]"/>
         </button>
 
         {/* 인벤토리 창 */}
@@ -852,6 +865,15 @@ export default function MainPage() {
 
     {/* 로딩 모달 */}
     {loading && <Loading visible={true} />}
+
+    {/* 헥사 스탯 */}
+    <AnimatePresence>
+      {showHexaStat && 
+        <HexaStat 
+          hexaStat = {character.hexa_stat}
+          onClose={() => setShowHexaStat(false)}
+        />}
+    </AnimatePresence>
     </div>
   );
 }

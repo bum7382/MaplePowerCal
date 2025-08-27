@@ -239,7 +239,7 @@ export default function EquipmentInfo({
     const noEditTypes = ["boss_damage", "damage", "all_stat", "ignore_monster_armor"];
     const showEtcInput = editable && !noEditTypes.includes(key);
     const showStarInput = editable && !isPercent && !noEditTypes.includes(key);
-    const showAddInput = editable && key !== "ignore_monster_armor"
+    const showAddInput = editable && key !== "ignore_monster_armor" && !["반지1","반지2","반지3","반지4"].includes(slot);
 
     const handleChange = (type, value) => {
       const allowEtcPercent = isPercent && type === "etc";

@@ -7,7 +7,7 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['62aac63e4987.ngrok-free.app'],
+    allowedHosts: ['540418742063.ngrok-free.app'],
     proxy: {
       '/api': 'https://maple-power-cal.vercel.app',
     },
