@@ -872,6 +872,7 @@ export default function MainPage() {
         <HexaStat 
           hexaStat = {character.hexa_stat}
           onClose={() => setShowHexaStat(false)}
+          character_class = {character.class}
         />}
     </AnimatePresence>
     </div>
