@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CoreActive from "./CoreActive";
 import { AnimatePresence, motion } from "framer-motion";
 import jobStat from "../data/jobStat.json";
+import { useToast } from "../utils/toastContext";
 
 
 export default function HexaStat({ hexaStat, onClose, character_class }) {
   const [selectedCore, setSelectedCore] = useState("core"); // 기본값 코어1
 	const [showCoreActive, setShowCoreActive] = useState(false)	// 코어 활성화 창
 	const jobInfo = jobStat.find(j => j.class === character_class);	// 직업 정보
+	const { showToast } = useToast(); // 토스트
+	// 화면에서 조작하는 임시 레벨 상태(메인/서브1/서브2)
+	const [uiLevels, setUiLevels] = useState({ main: 0, sub1: 0, sub2: 0 });
+	
 
   const hexaCoreValue = {
     "공격력 증가": { main: [0, 5, 10, 15, 20, 30, 40, 50, 65, 80, 100], 
@@ -92,6 +97,37 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
       </div>
     );
   };
+
+	// 코어 선택 또는 hexaStat 변경 시, 서버/원본 데이터로부터 초기화
+	useEffect(() => {
+		const node = hexaStat?.[`character_hexa_stat_${selectedCore}`]?.[0];
+		setUiLevels({
+			main: node?.main_stat_level ?? 0,
+			sub1: node?.sub_stat_level_1 ?? 0,
+			sub2: node?.sub_stat_level_2 ?? 0,
+		});
+	}, [selectedCore, hexaStat]);
+
+	// 유틸
+	const clamp = (n) => Math.min(10, Math.max(0, n));
+	const sum = (l) => (l.main + l.sub1 + l.sub2);
+
+	// 합 20 초과 방지 + 0~10 사이
+	const trySet = (next) => {
+		const clamped = {
+			main: clamp(next.main),
+			sub1: clamp(next.sub1),
+			sub2: clamp(next.sub2),
+		};
+		if (sum(clamped) > 20) {
+			showToast("각 스탯의 전체 레벨 합은 20을 넘을 수 없습니다.", "error");
+			return; // 반영하지 않음
+		}
+		setUiLevels(clamped);
+	};
+
+	const inc = (key) => trySet({ ...uiLevels, [key]: uiLevels[key] + 1 });
+	const dec = (key) => trySet({ ...uiLevels, [key]: uiLevels[key] - 1 });
 
   return (
 		<motion.div
@@ -225,9 +261,9 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 								return { label, val, passthrough: null, isPercent };
 							};
 
-							const m  = pick(node.main_stat_name,   node.main_stat_level,   "main");
-							const s1 = pick(node.sub_stat_name_1,  node.sub_stat_level_1,  "sub");
-							const s2 = pick(node.sub_stat_name_2,  node.sub_stat_level_2,  "sub");
+							const m  = pick(node.main_stat_name,   uiLevels.main,  "main");
+							const s1 = pick(node.sub_stat_name_1,  uiLevels.sub1,  "sub");
+							const s2 = pick(node.sub_stat_name_2,  uiLevels.sub2,  "sub");
 
 							const renderLine = (stat, rowClass, labelColor = "#FFFFFF") => (
 								<div className={rowClass}>
@@ -258,9 +294,9 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 				{corePresetUnlocked[selectedCore] && (
 					// 스탯 레벨 정보
 					<div className="absolute flex flex-col font-dotum text-white top-[50%] left-[68.85%] w-8 text-center [text-shadow:0_0_5px_#44B7CF,0_0_10px_#44B7CF,0_0_20px_#44B7CF,0_0_40px_#44B7CF]">
-						<span className="">{hexaStat[`character_hexa_stat_${selectedCore}`]?.[0].main_stat_level}</span>
-						<span className="mt-[235%]">{hexaStat[`character_hexa_stat_${selectedCore}`]?.[0].sub_stat_level_1}</span>
-						<span className="mt-[135%]">{hexaStat[`character_hexa_stat_${selectedCore}`]?.[0].sub_stat_level_2}</span>
+						<span className="">{uiLevels.main}</span>
+						<span className="mt-[235%]">{uiLevels.sub1}</span>
+						<span className="mt-[135%]">{uiLevels.sub2}</span>
 					</div>
 				)}
 
@@ -283,9 +319,9 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 								return `${label} +${val}${isPercent ? "%" : ""}`;
 							};
 
-							const m  = pick(node.main_stat_name,   node.main_stat_level,   "main");
-							const s1 = pick(node.sub_stat_name_1,  node.sub_stat_level_1,  "sub");
-							const s2 = pick(node.sub_stat_name_2,  node.sub_stat_level_2,  "sub");
+							const m  = pick(node.main_stat_name,   uiLevels.main,  "main");
+							const s1 = pick(node.sub_stat_name_1,  uiLevels.sub1,  "sub");
+							const s2 = pick(node.sub_stat_name_2,  uiLevels.sub2,  "sub");
 
 							return (
 								<>
@@ -311,9 +347,9 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 							// ---------------
 
 							const clamp = (n) => Math.min(Math.max(n ?? 0, 0), MAX_LEVEL);
-							const mainLv = clamp(node.main_stat_level);
-							const sub1Lv = clamp(node.sub_stat_level_1);
-							const sub2Lv = clamp(node.sub_stat_level_2);
+							const mainLv = clamp(uiLevels.main);
+							const sub1Lv = clamp(uiLevels.sub1);
+							const sub2Lv = clamp(uiLevels.sub2);
 
 							// kind: "메인게이지" | "서브게이지"
 							const renderGauge = (kind, level) => {
@@ -359,7 +395,82 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 					</div>
 				)}
 
+				{corePresetUnlocked[selectedCore] && (
+					// 레벨 올리기 / 내리기 (텍스트 버튼)
+					<div className="absolute z-30 top-[60.8%] left-[47.8%] text-white font-dotum text-[13px] select-none">
+						{/* 메인 */}
+						<div className="flex items-center gap-3 mb-2">
+							<span className="w-[94px] text-[#D4C6F0]">메인</span>
+							<button
+								type="button"
+								className="underline hover:opacity-80"
+								onClick={() => dec("main")}
+							>
+								레벨 내리기
+							</button>
+							<button
+								type="button"
+								className="underline hover:opacity-80"
+								onClick={() => inc("main")}
+							>
+								레벨 올리기
+							</button>
+						</div>
 
+						{/* 서브1 */}
+						<div className="flex items-center gap-3 mb-2 mt-[18%]">
+							<span className="w-[94px] text-[#B6E3F0]">서브 스탯 1</span>
+							<button
+								type="button"
+								className="underline hover:opacity-80"
+								onClick={() => dec("sub1")}
+							>
+								레벨 내리기
+							</button>
+							<button
+								type="button"
+								className="underline hover:opacity-80"
+								onClick={() => inc("sub1")}
+							>
+								레벨 올리기
+							</button>
+						</div>
+
+						{/* 서브2 */}
+						<div className="flex items-center gap-3 mt-[9.8%]">
+							<span className="w-[94px] text-[#B6E3F0]">서브 스탯 2</span>
+							<button
+								type="button"
+								className="underline hover:opacity-80"
+								onClick={() => dec("sub2")}
+							>
+								레벨 내리기
+							</button>
+							<button
+								type="button"
+								className="underline hover:opacity-80"
+								onClick={() => inc("sub2")}
+							>
+								레벨 올리기
+							</button>
+						</div>
+					</div>
+				)}
+
+				{coreUnlocked[selectedCore] && (
+					<button
+						className="absolute bottom-[20.7%] right-[38%]"
+					>
+						<img
+							src="/images/hexa/적용하기.normal.png"
+							alt="적용하기"
+							className="
+								hover:content-[url('/images/hexa/적용하기.hover.png')]
+								active:content-[url('/images/hexa/적용하기.pressed.png')]
+							"
+						/>
+					</button>
+				)}
 
 
 				{coreUnlocked[selectedCore] && corePresetUnlocked[selectedCore] && (

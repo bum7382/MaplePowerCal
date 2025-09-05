@@ -141,7 +141,7 @@ export default function MainPage() {
       equipmentMap[raw] = item;
     }
 
-    setOriginalEquipment(equipmentMap);
+    setOriginalEquipment(equipmentMap);    
     setEquipment(equipmentMap);
   }, [character]);
 

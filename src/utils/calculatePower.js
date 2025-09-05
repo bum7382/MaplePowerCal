@@ -33,6 +33,7 @@ function conversionStarforce(count){
   else return count * 170;
 }
 
+
 export function calculatePower(equipments, character_class, initialStat, noPerStat, initPerStat, character_level = 0) {
   const jobInfo = jobStat.find(j => j.class === character_class);
   if (!jobInfo) return 0;

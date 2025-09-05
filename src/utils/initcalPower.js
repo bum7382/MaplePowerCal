@@ -237,20 +237,26 @@ function championPower(champion, baseStat, noPerStat) {
 }
 
 // 5. 헥사 스탯
+/*
 function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
   const hexaCoreValue = {
     "공격력 증가": { main: [0, 5, 10, 15, 20, 30, 40, 50, 65, 80, 100], 
-				     sub: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50] },
+                        sub: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50] },
     "데미지 증가": { main: [0, 0.75, 1.5, 2.25, 3, 4.5, 6, 7.5, 9.75, 12, 15], 
-				          sub: [0, 0.75, 1.5, 2.25, 3, 3.75, 4.5, 5.25, 6, 6.75, 7.5] },
+                            sub: [0, 0.75, 1.5, 2.25, 3, 3.75, 4.5, 5.25, 6, 6.75, 7.5] },
     "보스 데미지 증가": { main: [0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 20], 
-				          sub: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+                            sub: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
     "크리티컬 데미지 증가": { main: [0, 0.35, 0.7, 1.05, 1.4, 2.10, 2.8, 3.5, 4.55, 5.6, 7], 
-				              sub: [0, 0.35, 0.7, 1.05, 1.4, 1.75, 2.1, 2.45, 2.8, 3.15, 3.5] },
+                                sub: [0, 0.35, 0.7, 1.05, 1.4, 1.75, 2.1, 2.45, 2.8, 3.15, 3.5] },
     "주력 스탯 증가": { main: [0, 100, 200, 300, 400, 600, 800, 1000, 1300, 1600, 2000], 
-			            sub: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] }
+                        sub: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
+    "올스탯 증가": { main: [0, 48, 96, 144, 192, 288, 384, 480, 624, 768, 960], 
+                        sub: [0, 48, 96, 144, 192, 240, 288, 336, 384, 432, 480] },
+    "최대 HP 증가": { main: [0, 2100, 4200, 6300, 8400, 12600, 16800, 21000, 27300, 33600, 42000], 
+                        sub: [0, 2100, 4200, 6300, 8400, 10500, 12600, 14700, 16800, 18900, 21000] }
   };
-    // 직업별 주력스탯 찾기
+  
+  // 직업별 주력스탯 찾기
   const jobInfo = jobStat.find(j => j.class === character_class);
   const mainStat = jobInfo?.main_stat ?? null;
 
@@ -291,7 +297,88 @@ function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
       else if (sub_stat_name_2 === "주력 스탯 증가" && mainStat) noPerStat[mainStat] += value;
     }
   });
+}*/
+
+function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
+  const hexaCoreValue = {
+    "공격력 증가": { main: [0, 5, 10, 15, 20, 30, 40, 50, 65, 80, 100], 
+                     sub:  [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50] },
+    "데미지 증가": { main: [0, 0.75, 1.5, 2.25, 3, 4.5, 6, 7.5, 9.75, 12, 15], 
+                     sub:  [0, 0.75, 1.5, 2.25, 3, 3.75, 4.5, 5.25, 6, 6.75, 7.5] },
+    "보스 데미지 증가": { main: [0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 20], 
+                         sub:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+    "크리티컬 데미지 증가": { main: [0, 0.35, 0.7, 1.05, 1.4, 2.10, 2.8, 3.5, 4.55, 5.6, 7], 
+                             sub:  [0, 0.35, 0.7, 1.05, 1.4, 1.75, 2.1, 2.45, 2.8, 3.15, 3.5] },
+    "주력 스탯 증가": { main: [0, 100, 200, 300, 400, 600, 800, 1000, 1300, 1600, 2000], 
+                     sub:  [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
+    "올스탯 증가":   { main: [0, 48, 96, 144, 192, 288, 384, 480, 624, 768, 960], 
+                     sub:  [0, 48, 96, 144, 192, 240, 288, 336, 384, 432, 480] },
+    "최대 HP 증가":  { main: [0, 2100, 4200, 6300, 8400, 12600, 16800, 21000, 27300, 33600, 42000], 
+                     sub:  [0, 2100, 4200, 6300, 8400, 10500, 12600, 14700, 16800, 18900, 21000] }
+  };
+
+  // 직업별 주력스탯 찾기 (제논/데벤 치환 전 기본 주스)
+  const jobInfo = jobStat.find(j => j.class === character_class);
+  const mainStat = jobInfo?.main_stat ?? null;
+
+  // --- [추가] 유틸: 존재하고 숫자일 때만 안전하게 더하기 ---
+  const addIfNumber = (obj, key, value) => {
+    if (!obj || key == null) return;
+    if (Object.prototype.hasOwnProperty.call(obj, key) && typeof obj[key] === "number") {
+      obj[key] += value;
+    }
+  };
+
+  // --- [추가] 직업별로 '주력 스탯 증가'를 치환 ---
+  const resolveName = (name) => {
+    if (name === "주력 스탯 증가") {
+      if (character_class === "제논") return "올스탯 증가";
+      if (character_class === "데몬어벤져") return "최대 HP 증가";
+    }
+    return name;
+  };
+
+  // --- [추가] 공통 적용 함수 (main/sub 공용) ---
+  const apply = (rawName, levelType /* 'main' | 'sub' */, level) => {
+    if (!rawName || level == null) return;
+    const name = resolveName(rawName);
+    const table = hexaCoreValue[name];
+    if (!table) return;
+    const value = table[levelType]?.[level] ?? 0;
+    if (!value) return;
+
+    if (name === "공격력 증가") baseStat.atk += value;
+    else if (name === "데미지 증가") baseStat.damage += value;
+    else if (name === "보스 데미지 증가") baseStat.boss_damage += value;
+    else if (name === "크리티컬 데미지 증가") baseStat.crit_damage += value;
+    else if (name === "주력 스탯 증가") {
+      if (mainStat) noPerStat[mainStat] += value; // 기존 로직 유지
+    }
+    else if (name === "올스탯 증가") {
+      // 제논 치환 포함: 존재하는 키에만 안전하게 분배
+      ["str","dex","int","luk","STR","DEX","INT","LUK","힘","민첩","지능","행운"].forEach(k => addIfNumber(noPerStat, k, value));
+    }
+    else if (name === "최대 HP 증가") {
+      // 데몬어벤져 치환 포함: 프로젝트에서 쓰는 HP 키에만 적용
+      ["hp","max_hp","HP","MAX_HP","최대HP","최대 HP"].forEach(k => addIfNumber(noPerStat, k, value));
+    }
+  };
+
+  // 세 코어 모두 합산
+  const allCores = [
+    ...(hexa_stat.character_hexa_stat_core || []),
+    ...(hexa_stat.character_hexa_stat_core_2 || []),
+    ...(hexa_stat.character_hexa_stat_core_3 || [])
+  ];
+
+  allCores.forEach(core => {
+    const { main_stat_name, main_stat_level, sub_stat_name_1, sub_stat_level_1, sub_stat_name_2, sub_stat_level_2 } = core;
+    apply(main_stat_name, "main", main_stat_level);
+    apply(sub_stat_name_1, "sub",  sub_stat_level_1);
+    apply(sub_stat_name_2, "sub",  sub_stat_level_2);
+  });
 }
+
 
 // 6. 하이퍼 스탯
 function hyperStatPower(hyperStat, baseStat, noPerStat, perStat) {
