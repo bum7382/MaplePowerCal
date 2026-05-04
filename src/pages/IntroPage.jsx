@@ -91,24 +91,24 @@ export default function IntroPage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 mt-4 z-50">
         <div className="
           bg-[#1F2735] bg-opacity-60 font-galmuri text-white rounded-[10px] flex flex-row items-center px-4 py-2 shadow-md
-          max-w-[90vw] w-fit min-w-[200px] max-sm:px-2 max-sm:py-1"
+          max-w-[90vw] w-fit min-w-[200px]"
           onClick={() => {
             setNotice(true);
           }}>
           <img src="/images/icons/확성기.png"
-            className="w-7 h-7 mr-2 max-sm:w-5 max-sm:h-5"
+            className="w-5 h-5 sm:w-7 sm:h-7 mr-2"
             alt="공지"
             draggable={false}
           />
           {/* 미리보기 문장 */}
-          <span className="text-base max-sm:text-xs whitespace-pre-line">
+          <span className="text-xs sm:text-base whitespace-pre-line">
             {notices.length > 0 ? notices[0].title : "공지사항입니다."}
           </span>
         </div>
       </div>
 
       {/* 로고 */}
-      <div className="flex flex-col items-center mb-10 max-sm:mb-1">
+      <div className="flex flex-col items-center mb-2 sm:mb-10">
         <img
           src="/images/logo.png"
           alt="메이플 스펙업 효율 계산기"
@@ -121,25 +121,24 @@ export default function IntroPage() {
       <div className="flex gap-[100px]">
         <button
           onClick={() => setShowSearch(true)}
-          className="w-[160px] h-[50px] font-galmuri text-white text-[16px] rounded-full 
+          className="w-[140px] h-[40px] sm:w-[160px] sm:h-[50px] font-galmuri text-white text-[13px] sm:text-[16px] rounded-full 
                      bg-[#44B7CF] hover:bg-[#369EBC] border-2 border-white shadow-md mb-4
-                     max-sm:w-[140px] max-sm:h-[40px] max-sm:text-[13px]">
+                     ">
           캐릭터 검색하기
         </button>
       </div>
       
       {/* 즐겨찾기 캐릭터 리스트 블러 박스 */}
       <div className="
-        w-[650px] min-h-[60px] mt-5 mx-auto rounded-[20px]
-        bg-white/60 backdrop-blur-md flex flex-wrap justify-center items-center 
-        px-6 py-4 gap-2 shadow-lg
-        max-sm:w-[300px] max-sm:mt-10">
+        w-[90vw] max-w-[650px] min-h-[60px] mt-5 mx-auto rounded-[20px]
+        bg-white/60 backdrop-blur-md flex flex-wrap justify-center items-center
+        px-4 sm:px-6 py-4 gap-2 shadow-lg">
         {/* 즐겨찾기 타이틀 */}
         <span
           className="
-            absolute left-[21px] -top-[30px] text-white text-[15px] font-galmuri tracking-widest select-none
+            absolute left-[15px] sm:left-[21px] -top-[25px] sm:-top-[30px] text-white text-[12px] sm:text-[15px] font-galmuri tracking-widest select-none
             bg-[#44B7CF]/80 px-4 py-1 shadow rounded-[10px] backdrop-blur-md z-0
-            max-sm:text-[12px] max-sm:left-[15px] max-sm:-top-[25px]"
+            "
           style={{ pointerEvents: "none" }}>
           ⭐즐겨찾기
         </span>
@@ -159,8 +158,8 @@ export default function IntroPage() {
                 <span
                   className="
                     flex items-center bg-white/80 rounded-full px-4 py-1 
-                    text-gray-800 text-[15px] shadow font-galmuri mr-2 mb-2
-                    max-sm:text-[13px]">
+                    text-gray-800 text-[13px] sm:text-[15px] shadow font-galmuri mr-2 mb-2
+                    ">
                   <span className="mr-2">{char}</span>
                   <button
                     onClick={(e) => {

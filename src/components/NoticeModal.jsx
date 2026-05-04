@@ -8,7 +8,7 @@ export default function NoticeModal({ onClose, notices }) {
   if (selectedIdx === null) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
-        <div className="relative bg-white rounded-2xl shadow-2xl w-[90vw] max-w-lg max-h-[90vh] font-galmuri p-6">
+        <div className="relative bg-white rounded-2xl shadow-2xl w-[90vw] max-w-lg max-h-[90vh] font-galmuri p-4 sm:p-6">
           <button
             className="absolute top-[0.5px] right-2 text-[15px] text-gray-500 hover:text-black font-bold"
             onClick={onClose}>
@@ -41,7 +41,7 @@ export default function NoticeModal({ onClose, notices }) {
   const notice = notices[selectedIdx];
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
-      <div className="relative bg-white rounded-2xl shadow-2xl w-[90vw] max-w-lg max-h-[90vh] font-galmuri p-6">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-[90vw] max-w-lg max-h-[90vh] font-galmuri p-4 sm:p-6">
         <button
           className="absolute top-3 right-4 text-xl text-gray-500 hover:text-black font-bold"
           onClick={onClose}

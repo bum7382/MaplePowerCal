@@ -15,9 +15,9 @@ export default function InventoryPanel({ items = [], onSlotClick, onDeleteClick,
   // 항상 SLOTS_PER_PAGE만큼 슬롯 생성, 비어있으면 null
   const slots = [...Array(SLOTS_PER_PAGE)].map((_, idx) => currentItems[idx] || null);
   return (
-    <div className="relative bottom-10 inline-block w-[500px] max-sm:w-[80vw] max-sm:bottom-[9vh] overflow-visible">
+    <div className="relative bottom-10 sm:bottom-10 inline-block w-[80vw] sm:w-[500px] overflow-visible">
       {/* 인벤토리 배경 */}
-      <img src="/images/inventory/inventory.png" alt="inventory background" className="w-[500px]" />
+      <img src="/images/inventory/inventory.png" alt="inventory background" className="w-full sm:w-[500px]" />
 
       {/* 슬롯 오버레이 */}
       <div className="absolute top-[22%] left-[3.8%] w-[92.3%]">

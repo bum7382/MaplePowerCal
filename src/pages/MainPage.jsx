@@ -15,6 +15,7 @@ import { getCachedCharacter, setCachedCharacter, removeCachedCharacter } from ".
 import TutorialMobile from "../components/TutorialMobile.jsx";
 import { AnimatePresence, motion } from "framer-motion";
 import HexaStat from "../components/HexaStat.jsx";
+import useIsMobile from "../utils/useIsMobile.js";
 
 
 export default function MainPage() {
@@ -68,17 +69,11 @@ export default function MainPage() {
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
   const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
-  const [isMobile, setIsMobile] = useState(false);  // 모바일 여부
+  const isMobile = useIsMobile();  // 모바일 여부
 
   
   const lastTouch = useRef(0);  // 마지막 터치 시간
   
-  // 모바일 여부 확인
-  useEffect(() => {
-      if (/iPhone|iPad|iPod|Android/i.test(window.navigator.userAgent)) {
-        setIsMobile(true);
-      }
-    }, []);
 
   /* ===== 튜토리얼 ===== */
   // 튜토리얼 기록 확인
@@ -141,7 +136,7 @@ export default function MainPage() {
       equipmentMap[raw] = item;
     }
 
-    setOriginalEquipment(equipmentMap);    
+    setOriginalEquipment(equipmentMap);
     setEquipment(equipmentMap);
   }, [character]);
 
@@ -162,6 +157,7 @@ export default function MainPage() {
       character.perStat,
       character.level);
     setOriginalPower(basePower);
+    console.log(equipment);
     setInitDone(true);
   }, [character, equipment, initDone]);
     
@@ -338,7 +334,7 @@ export default function MainPage() {
   };
 
   // 각 장비 슬롯 위치
-  const slotStyle = "absolute w-[48px] h-[48px] bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
+  const slotStyle = "absolute w-full h-full bg-black bg-opacity-0 rounded active:bg-opacity-20 hover:bg-opacity-10";
   const slots = [
     ...["반지1", "반지2", "반지3", "반지4", "벨트", "포켓 아이템"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 7.9 })),
     ...["얼굴장식", "눈장식", "귀고리", "펜던트", "펜던트2"].map((name, i) => ({ name, top: 23.05 + i * 10, left: 20.1 })),
@@ -353,7 +349,7 @@ export default function MainPage() {
     <div className="relative w-screen h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat select-none"
          style={{ backgroundImage: "url(/images/background_blur.png)" }}>
       {/* 장비창 */}
-      <div className="relative w-[420px] aspect-[420/509] max-sm:w-[90%]">
+      <div className="relative w-[90%] sm:w-[420px] aspect-[420/509]">
         {/* 장비창 배경 */}
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
         {/* 장비창 설명 */}
@@ -371,25 +367,25 @@ export default function MainPage() {
         {/* 정보 갱신 버튼 */}
         <button
           onClick = {handleRefresh}
-          className="absolute top-[5%] right-[10%] bg-[#1F2735] bg-opacity-60 w-[85px] h-[30px] rounded text-[13px]
+          className="absolute top-[5%] right-[10%] bg-[#1F2735] bg-opacity-60 w-[70px] h-[25px] sm:w-[85px] sm:h-[30px] rounded text-[10px] sm:text-[13px]
           font-galmuri text-white active:brightness-75 hover:brightness-125 transition text-center
-          max-sm:w-[75px] max-sm:h-[25px] max-sm:text-[10px]" 
+          " 
           >
           정보 갱신
         </button>
         
         {/* 전투력 증가량 */}
         <div className="absolute -translate-y-[100px] left-1/2 -translate-x-1/2 z-20">
-          <div className="w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-50 px-4 py-1 rounded
-                          max-sm:w-[300px]">
+          <div className="w-[90vw] max-w-[600px] h-[50px] flex items-center justify-center text-center text-white bg-[#1F2735] bg-opacity-50 px-4 py-1 rounded
+                          max-sm:w-[90vw]">
             <span className="font-galmuri absolute left-4 text-[14px] text-[#E0E8F2]
-                            max-sm:-top-[23px] max-sm:left-[35%] max-sm:text-center max-sm:text-black">
+                            sm:left-4 max-sm:-top-[23px] max-sm:left-[35%] max-sm:text-center max-sm:text-black">
               전투력 증가량:
             </span>
            <span
             className={
               "font-kohi text-[23px] " +
-              (window.innerWidth <= 640
+              (isMobile
                 ? (powerDiff < 0 ? "text-[#FF006E]" : "text-white")
                 : (powerDiff < 0
                     ? "bg-gradient-to-b from-[#BE0058] to-[#FF006E] bg-clip-text text-transparent"
@@ -480,8 +476,7 @@ export default function MainPage() {
 
         {/* 처음으로 버튼 */}
         <button
-          className="absolute top-[75%] left-[40%] px-4 py-[7px] bg-[#44B7CF] text-white items-center text-[80%] font-galmuri rounded-[5px] hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50
-                    max-sm:text-[10px] max-sm:top-[75%] max-sm:px-3 max-sm:py-1"
+          className="absolute top-[75%] left-[40%] px-3 py-1 sm:px-4 sm:py-[7px] bg-[#44B7CF] text-white items-center text-[10px] sm:text-[80%] font-galmuri rounded-[5px] hover:bg-[#60DCF6] active:bg-[#2b7f94] z-50"
           onClick={() => navigate("/")}
         >
           처음으로
@@ -602,8 +597,8 @@ export default function MainPage() {
             {/* 전체 초기화 버튼 */}
             <button
               onClick={handleResetAllEquipment}
-              className="bg-red-600 w-[90px] h-[30px] rounded text-[13px] font-galmuri text-white active:brightness-75 hover:brightness-110 transition text-center
-                         max-sm:text-[9px] max-sm:w-[60px] max-sm:h-[20px]"
+              className="bg-red-600 w-[55px] h-[20px] sm:w-[90px] sm:h-[30px] rounded text-[9px] sm:text-[13px] font-galmuri text-white active:brightness-75 hover:brightness-110 transition text-center
+                         "
             >
               전체 초기화
             </button>
@@ -639,8 +634,8 @@ export default function MainPage() {
                 setShowInfo(false);
                 setInfoLocked(false);
               }}
-              className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-galmuri px-4 py-1 rounded text-[13px]
-                         max-sm:text-[9px] max-sm:px-2 max-sm:w-[50px] max-sm:h-[20px]"
+              className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-galmuri px-2 py-1 sm:px-4 rounded text-[9px] sm:text-[13px]
+                         "
             >
               초기화
             </button>
@@ -662,8 +657,8 @@ export default function MainPage() {
                 }
                 else showToast("이미 인벤토리에 추가된 아이템입니다!", "error")
               }}
-              className="bg-[#44B7CF] hover:bg-[#60DCF6] active:bg-[#2b7f94] font-galmuri text-white px-4 py-1 rounded text-[13px]
-                         max-sm:text-[9px] max-sm:px-2 max-sm:h-[20px]"
+              className="bg-[#44B7CF] hover:bg-[#60DCF6] active:bg-[#2b7f94] font-galmuri text-white px-2 py-1 sm:px-4 rounded text-[9px] sm:text-[13px]
+                         "
             >
               인벤토리에 저장
             </button>
@@ -755,7 +750,7 @@ export default function MainPage() {
           item={equipment[hoveredSlot]}
           editable={isInfoLocked}
           onEdit={handleEditClick}
-          isMobile = {isMobile}
+
           slot={hoveredSlot}
           onClose={() => {
             setShowInfo(false);
@@ -815,7 +810,7 @@ export default function MainPage() {
 
     {/* 장비 검색 모달 */}
     {showSearch && selectedSlot && !equipment[selectedSlot] && (
-      <div className="absolute top-[23%] right-[16%] z-30 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:right-auto max-sm:top-[80%]">
+      <div className="absolute top-[23%] right-[16%] z-30 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:right-auto max-sm:top-[75%]">
         {/* 모달 닫기 X 버튼 */}
         <button
           className="absolute top-2 right-2 text-gray-600 hover:text-black"

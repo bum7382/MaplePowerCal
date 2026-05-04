@@ -11,3 +11,8 @@ Thumbs.db
 node_modules/
 dist/
 apitest.js
+
+# ===== env =====
+.env
+.env.local
+.env.*.local

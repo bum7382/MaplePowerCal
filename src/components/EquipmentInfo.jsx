@@ -10,6 +10,7 @@ import calculateStarforceStat from "../utils/calculateStarforceStat"
 import tyrantTable from "../data/starforceTyrantStatTable";
 import ScrollModal from "./ScrollModal";
 import { AnimatePresence } from "framer-motion";
+import useIsMobile from "../utils/useIsMobile";
 
 // 등급별 색상
 const gradeColor = {
@@ -57,7 +58,7 @@ export default function EquipmentInfo({
   item,
   editable,
   onEdit,
-  isMobile,
+
   slot,
   onClose,
   onSave,
@@ -73,6 +74,7 @@ export default function EquipmentInfo({
 }) {
   
   // const [price, setPrice] = useState(item.price?.toString() || "0");  // 가격
+  const isMobile = useIsMobile();
   const [starforce, setStarforce] = useState(Number(item.starforce || 0));  // 스타포스
 
   const [starforceOption, setStarforceOption] = useState({ ...item.item_starforce_option });  // 스타포스작
@@ -86,6 +88,17 @@ export default function EquipmentInfo({
   const noPotentialSlots = ["뱃지", "훈장", "포켓 아이템"]; // 잠재옵션 불가 슬롯
   const isSeedRing = item.special_ring_level !== 0;  // 시드링 여부
   const cannotHavePotential = noPotentialSlots.includes(item.item_equipment_slot) || isSeedRing;  // 잠재옵션 불가
+
+  // 아스트라 보조무기 판별: _id 1720000~1729999 또는 아이콘 URL의 0172xxxx
+  const itemId = (() => {
+    if (typeof item._id === "number") return item._id;
+    if (typeof item.item_icon === "string") {
+      const m = item.item_icon.match(/\/0?(\d{7,8})\.\w+$/);
+      if (m) return parseInt(m[1], 10);
+    }
+    return null;
+  })();
+  const isAstraSubweapon = itemId !== null && itemId >= 1720000 && itemId < 1730000;
   let isTyrant = false; // 타일런트 장비 여부
   const [showScrollModal, setShowScrollModal] = useState(false);  // 주문서 모달
   const etcOptionsBackup = useRef();  // 백업용 추옵
@@ -139,6 +152,9 @@ export default function EquipmentInfo({
   const getMaxStarforce = (name, level) => {
     isTyrant = isTyrantItem(name);
 
+    // 아스트라 보조무기는 무조건 30성
+    if (isAstraSubweapon) return 30;
+
     if(isTyrant){
       if (level <= 94) return 3;
       if (level <= 107) return 5;
@@ -155,7 +171,7 @@ export default function EquipmentInfo({
       if (level <= 137) return 20;
       else return 30;
     }
-    
+
   };
 
   // 스타포스 UI 렌더링
@@ -515,12 +531,12 @@ export default function EquipmentInfo({
   return (
     <>
       {/* 장비 정보 모달 */}
-      <div className={"absolute left-[180px] top-[30px] w-[450px] bg-[#1f2735] text-white rounded-xl shadow-lg p-4 z-50 font-galmuri overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent max-sm:-translate-x-1/2 max-sm:w-[90%] max-sm:left-1/2 " + (showInventory ? "max-sm:top-[91%]" : "max-sm:top-[80%]")}>
+      <div className={"absolute z-50 bg-[#1f2735] text-white rounded-xl shadow-lg p-4 font-galmuri overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent " + (isMobile ? "left-1/2 -translate-x-1/2 w-[90vw] max-w-[450px] " + (showInventory ? "top-[91%]" : "top-[80%]") : "left-[180px] top-[30px] w-[450px]")}>
         <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
         {/* 스타포스 별 */}
         <div className="mb-2 text-center">
           {!(["훈장", "뱃지", "엠블렘", "포켓 아이템"].includes(item.item_equipment_slot) ||
-            (item.item_equipment_slot === "보조무기" && character.class !== "듀얼블레이더")
+            (item.item_equipment_slot === "보조무기" && character.class !== "듀얼블레이더" && !isAstraSubweapon)
           ) && !isSeedRing &&
           renderStarforceGrid(starforce, +item.item_base_option.base_equipment_level, item.item_name)}
           <p className="text-lg max-sm:text-[15px]">
@@ -534,13 +550,13 @@ export default function EquipmentInfo({
             <img src="/images/info/tooltip_itemicon.png" className="absolute inset-0 w-full h-full object-contain" />
             <img src={item.item_icon} className="absolute p-3 inset-0 w-full h-full object-contain" />
           </div>
-          <div className="text-sm text-right w-[320px]">
+          <div className="text-sm text-right w-full sm:w-[320px]">
             <p className="mt-2 text-[#85919F] text-[15px] max-sm:text-[10px]">전투력 증가량</p>
             <p
               className={
                 "mt-3 text-[27px] font-kohi whitespace-nowrap max-sm:text-[17px] max-sm:mt-1 leading-[1.2] " +
                 (
-                  window.innerWidth <= 640
+                  isMobile
                     ? // 모바일
                       (diff < 0
                         ? "text-[#FF006E]"
@@ -690,7 +706,7 @@ export default function EquipmentInfo({
       </div>
       {/* 주문서 모달 */}
       <AnimatePresence>
-        <div className={"absolute left-[calc(180px+450px+24px)] top-[30px] z-50 max-sm:w-[90%] max-sm:left-1/2 max-sm:-translate-x-1/2 " + (showInventory ? "max-sm:top-[188%]" : "max-sm:top-[175%]")}>
+        <div className={"absolute z-50 " + (isMobile ? "left-1/2 -translate-x-1/2 w-[90vw] " + (showInventory ? "top-[188%]" : "top-[175%]") : "left-[calc(180px+450px+24px)] top-[30px]")}>
           {editable && showScrollModal && (
             <ScrollModal 
               item = {item}

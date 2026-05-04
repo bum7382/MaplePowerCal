@@ -63,7 +63,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
 
   return (
     <div className="select-none fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-[20px] w-[600px] p-10 relative shadow-lg">
+      <div className="bg-white rounded-[20px] w-[90vw] max-w-[600px] p-6 sm:p-10 relative shadow-lg">
         <div className="absolute -top-[36px] left-[25px] bg-[#44B7CF] font-galmuri text-white px-6 py-2 rounded-t-lg text-sm shadow-md z-20">
           캐릭터 검색
         </div>
@@ -72,7 +72,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
           <img
             src="/images/logo.png"
             alt="메이플 스펙업 효율 계산기"
-            className="w-70 h-auto mb-4 drop-shadow-xl max-sm:w-[200px] max-sm:-mb-4"
+            className="w-[200px] sm:w-70 h-auto mb-0 sm:mb-4 drop-shadow-xl"
           />
         </div>
 
@@ -88,7 +88,7 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
           <button
             type="button"
             onClick={() => handleSearch()}
-            className="bg-[#44B7CF] text-white px-6 text-sm font-galmuri hover:bg-[#369EBC] max-sm:px-4"
+            className="bg-[#44B7CF] text-white px-4 sm:px-6 text-sm font-galmuri hover:bg-[#369EBC]"
           >
             검색
           </button>
