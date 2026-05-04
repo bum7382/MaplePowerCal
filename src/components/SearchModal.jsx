@@ -83,12 +83,12 @@ export default function SearchModal({ onClose, onSearchStart, onSearchSuccess, s
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSearch()}
-            className="flex-1 px-4 py-2 outline-none bg-gray-100 text-sm"
+            className="flex-1 min-w-0 px-4 py-2 outline-none bg-gray-100 text-sm"
           />
           <button
             type="button"
             onClick={() => handleSearch()}
-            className="bg-[#44B7CF] text-white px-4 sm:px-6 text-sm font-galmuri hover:bg-[#369EBC]"
+            className="shrink-0 bg-[#44B7CF] text-white px-4 sm:px-6 text-sm font-galmuri hover:bg-[#369EBC]"
           >
             검색
           </button>
