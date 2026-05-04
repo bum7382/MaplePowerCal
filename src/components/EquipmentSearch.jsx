@@ -95,6 +95,31 @@ function normalizeItem(item, slot) {
   };
 }
 
+// sessionStorage 캐시 헬퍼 (raw API 응답을 저장, 후처리는 매번 다시 적용)
+const CACHE_PREFIX = "equipSearch:";
+
+function buildCacheKey(baseSlot, query, jobBit, typeList) {
+  const sortedTypes = [...typeList].sort().join(",");
+  return `${CACHE_PREFIX}${baseSlot}|q=${query.trim()}|j=${jobBit}|t=${sortedTypes}`;
+}
+
+function getCachedRaw(key) {
+  try {
+    const v = sessionStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedRaw(key, data) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(data));
+  } catch {
+    // QuotaExceeded 등은 조용히 무시
+  }
+}
+
 export default function EquipmentSearch({ slot, onSelectItem, character_class }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -102,27 +127,57 @@ export default function EquipmentSearch({ slot, onSelectItem, character_class })
   const { showToast } = useToast();
 
   useEffect(() => {
+    const baseSlot = slot.replace(/[0-9]/g, "");
+    const jobBit = getReqJobBitmask(character_class);
+
+    // 무기/보조무기 종류 결정
+    const typeList = (() => {
+      if (baseSlot !== "무기" && baseSlot !== "보조무기") return [];
+      const key = baseSlot === "무기" ? "weapon" : "subweapon";
+      const types = classWeapon[key]?.[character_class];
+      const arr = Array.isArray(types) ? [...types] : [];
+      // 방패는 보조무기 검색 시 항상 포함 (req_job으로 자동 필터링)
+      if (baseSlot === "보조무기" && !arr.includes("방패")) arr.push("방패");
+      return arr;
+    })();
+
+    // 받은 raw 데이터에 후처리 적용 (포스실드 필터 + 중복 제거)
+    const applyPostFilters = (rawData) => {
+      let filtered = rawData;
+      if (baseSlot === "보조무기") {
+        const isDemon = character_class === "데몬슬레이어" || character_class === "데몬어벤져";
+        filtered = filtered.filter((item) => {
+          if (item.item_equipment_slot !== "방패") return true;
+          const isForceShield = item.item_name?.includes("포스실드");
+          return isDemon ? isForceShield : !isForceShield;
+        });
+      }
+      const seen = new Set();
+      return filtered.filter((item) => {
+        const k = item.item_name;
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    };
+
+    const cacheKey = buildCacheKey(baseSlot, query, jobBit, typeList);
+
+    // 캐시 히트: 즉시 결과 표시 (debounce 생략)
+    const cached = getCachedRaw(cacheKey);
+    if (cached) {
+      setResults(applyPostFilters(cached));
+      setLoading(false);
+      return;
+    }
+
+    // 캐시 미스: 디바운스 후 fetch
     const delayDebounce = setTimeout(() => {
       setLoading(true);
       const params = new URLSearchParams({ slot });
       if (query.trim().length > 0) params.set("query", query.trim());
-      const jobBit = getReqJobBitmask(character_class);
       if (jobBit > 0) params.set("jobBit", String(jobBit));
-
-      // 무기/보조무기는 직업별 사용 가능한 종류로 제한
-      const baseSlot = slot.replace(/[0-9]/g, "");
-      if (baseSlot === "무기" || baseSlot === "보조무기") {
-        const key = baseSlot === "무기" ? "weapon" : "subweapon";
-        const types = classWeapon[key]?.[character_class];
-        const typeList = Array.isArray(types) ? [...types] : [];
-        // 방패는 직업 매핑에 의존하지 않고 항상 보조무기 검색 대상에 포함 (req_job으로 자동 필터링)
-        if (baseSlot === "보조무기" && !typeList.includes("방패")) {
-          typeList.push("방패");
-        }
-        if (typeList.length > 0) {
-          params.set("types", typeList.join(","));
-        }
-      }
+      if (typeList.length > 0) params.set("types", typeList.join(","));
 
       fetch(`/api/searchItem?${params.toString()}`)
         .then((res) => {
@@ -134,25 +189,8 @@ export default function EquipmentSearch({ slot, onSelectItem, character_class })
             setResults([]);
             return;
           }
-          // 보조무기 + 방패: 포스실드 이름은 데몬 직업군(데몬슬레이어/데몬어벤져) 전용
-          let filtered = data;
-          if (baseSlot === "보조무기") {
-            const isDemon = character_class === "데몬슬레이어" || character_class === "데몬어벤져";
-            filtered = filtered.filter((item) => {
-              if (item.item_equipment_slot !== "방패") return true;
-              const isForceShield = item.item_name?.includes("포스실드");
-              return isDemon ? isForceShield : !isForceShield;
-            });
-          }
-          // item_name 기준 중복 제거 (같은 이름은 처음 항목만 유지)
-          const seen = new Set();
-          const deduped = filtered.filter((item) => {
-            const key = item.item_name;
-            if (!key || seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-          setResults(deduped);
+          setCachedRaw(cacheKey, data);
+          setResults(applyPostFilters(data));
         })
         .catch(() => {
           showToast("장비 검색에 실패했습니다.", "error");

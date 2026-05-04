@@ -674,13 +674,15 @@ export default function MainPage() {
             className="custom-cursor hover:content-[url('/images/icons/bag_hover.png')] active:content-[url('/images/icons/bag_pressed.png')]"/>
         </button>
 
-        {/* 헥사스탯 아이콘 */}
+        {/* 헥사스탯 아이콘 - To-Do*/}
+        {/*
         <button className="absolute bottom-[1.2%] left-[12%] w-[10%] transition max-sm:w-[7%]"
           onClick={() => setShowHexaStat((prev) => !prev)}>
           <img 
             src="/images/hexa/헥사메뉴.normal.png" draggable="false"
             className="custom-cursor hover:content-[url('/images/hexa/헥사메뉴.hover.png')] active:content-[url('/images/hexa/헥사메뉴.pressed.png')]"/>
         </button>
+        */}
 
         {/* 인벤토리 창 */}
         <AnimatePresence>
