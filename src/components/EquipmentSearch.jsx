@@ -114,8 +114,13 @@ export default function EquipmentSearch({ slot, onSelectItem, character_class })
       if (baseSlot === "무기" || baseSlot === "보조무기") {
         const key = baseSlot === "무기" ? "weapon" : "subweapon";
         const types = classWeapon[key]?.[character_class];
-        if (Array.isArray(types) && types.length > 0) {
-          params.set("types", types.join(","));
+        const typeList = Array.isArray(types) ? [...types] : [];
+        // 방패는 직업 매핑에 의존하지 않고 항상 보조무기 검색 대상에 포함 (req_job으로 자동 필터링)
+        if (baseSlot === "보조무기" && !typeList.includes("방패")) {
+          typeList.push("방패");
+        }
+        if (typeList.length > 0) {
+          params.set("types", typeList.join(","));
         }
       }
 
@@ -129,9 +134,19 @@ export default function EquipmentSearch({ slot, onSelectItem, character_class })
             setResults([]);
             return;
           }
+          // 보조무기 + 방패: 포스실드 이름은 데몬 직업군(데몬슬레이어/데몬어벤져) 전용
+          let filtered = data;
+          if (baseSlot === "보조무기") {
+            const isDemon = character_class === "데몬슬레이어" || character_class === "데몬어벤져";
+            filtered = filtered.filter((item) => {
+              if (item.item_equipment_slot !== "방패") return true;
+              const isForceShield = item.item_name?.includes("포스실드");
+              return isDemon ? isForceShield : !isForceShield;
+            });
+          }
           // item_name 기준 중복 제거 (같은 이름은 처음 항목만 유지)
           const seen = new Set();
-          const deduped = data.filter((item) => {
+          const deduped = filtered.filter((item) => {
             const key = item.item_name;
             if (!key || seen.has(key)) return false;
             seen.add(key);

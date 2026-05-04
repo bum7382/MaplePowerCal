@@ -24,18 +24,26 @@ export default async function handler(req, res) {
     const filter = {};
 
     // 슬롯 필터링
-    // - 무기/보조무기는 DB에 세부 종류(예: "창", "검", "방패")로 들어있고 item_equipment_part가 "무기"/"보조무기"
-    // - 그 외 부위는 item_equipment_slot이 슬롯명과 일치 (반지1/2/3/4 → 반지, 펜던트2 → 펜던트로 정규화)
+    // - 무기: item_equipment_part="무기" + item_equipment_slot은 세부 타입(창/검/...)
+    // - 보조무기: 방패는 part가 다를 수 있으므로 part 필터 안 걸고 types(item_equipment_slot)로만 거름
+    // - 그 외: item_equipment_slot = slot (반지1/2/3/4 → 반지, 펜던트2 → 펜던트)
     if (slot) {
       const baseSlot = slot.replace(/[0-9]/g, "");
-      if (baseSlot === "무기" || baseSlot === "보조무기") {
-        filter.item_equipment_part = baseSlot;
-        // 직업이 사용 가능한 무기 종류로 추가 필터 (예: 다크나이트 → 창/폴암)
-        if (types && typeof types === "string") {
-          const typeList = types.split(",").map((t) => t.trim()).filter(Boolean);
-          if (typeList.length > 0) {
-            filter.item_equipment_slot = { $in: typeList };
-          }
+      const typeList = types && typeof types === "string"
+        ? types.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+
+      if (baseSlot === "무기") {
+        filter.item_equipment_part = "무기";
+        if (typeList.length > 0) {
+          filter.item_equipment_slot = { $in: typeList };
+        }
+      } else if (baseSlot === "보조무기") {
+        // 방패가 보조무기 외 part로 저장될 수 있어 item_equipment_slot만으로 필터
+        if (typeList.length > 0) {
+          filter.item_equipment_slot = { $in: typeList };
+        } else {
+          filter.item_equipment_part = "보조무기";
         }
       } else {
         filter.item_equipment_slot = baseSlot;
