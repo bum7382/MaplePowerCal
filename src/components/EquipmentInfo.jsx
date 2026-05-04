@@ -74,7 +74,7 @@ export default function EquipmentInfo({
 }) {
   
   // const [price, setPrice] = useState(item.price?.toString() || "0");  // 가격
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(1024); // 1024 이하는 모바일/바텀시트 레이아웃
   const [starforce, setStarforce] = useState(Number(item.starforce || 0));  // 스타포스
 
   const [starforceOption, setStarforceOption] = useState({ ...item.item_starforce_option });  // 스타포스작
@@ -531,7 +531,13 @@ export default function EquipmentInfo({
   return (
     <>
       {/* 장비 정보 모달 */}
-      <div className={"absolute z-50 bg-[#1f2735] text-white rounded-xl shadow-lg p-4 font-galmuri overflow-y-auto max-h-[90vh] scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent " + (isMobile ? "left-1/2 -translate-x-1/2 w-[90vw] max-w-[450px] " + (showInventory ? "top-[91%]" : "top-[80%]") : "left-[180px] top-[30px] w-[450px]")}>
+      <div className={"z-50 bg-[#1f2735] text-white rounded-xl shadow-lg p-4 font-galmuri overflow-y-auto scrollbar-thin scrollbar-thumb-[#44B7CF] scrollbar-track-transparent " + (
+        isMobile
+          // 콤팩트: 뷰포트 하단에 고정, 페이지 스크롤과 무관하게 항상 보임
+          ? "fixed bottom-2 left-1/2 -translate-x-1/2 w-[90vw] max-w-[450px] max-h-[55vh]"
+          // PC 스케일: 디자인 좌표에서 사이드 모달
+          : "absolute left-[180px] top-[30px] w-[450px] max-h-[90vh]"
+      )}>
         <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
         {/* 스타포스 별 */}
         <div className="mb-2 text-center">
@@ -706,7 +712,12 @@ export default function EquipmentInfo({
       </div>
       {/* 주문서 모달 */}
       <AnimatePresence>
-        <div className={"absolute z-50 " + (isMobile ? "left-1/2 -translate-x-1/2 w-[90vw] " + (showInventory ? "top-[188%]" : "top-[175%]") : "left-[calc(180px+450px+24px)] top-[30px]")}>
+        <div className={"z-50 " + (
+          isMobile
+            // 콤팩트: 뷰포트 상단에 고정. 메인 모달은 하단에 있으므로 위에 띄움
+            ? "fixed top-2 left-1/2 -translate-x-1/2 w-[90vw] max-h-[40vh] overflow-y-auto"
+            : "absolute left-[calc(180px+450px+24px)] top-[30px]"
+        )}>
           {editable && showScrollModal && (
             <ScrollModal 
               item = {item}

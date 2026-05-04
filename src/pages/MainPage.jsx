@@ -69,9 +69,26 @@ export default function MainPage() {
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [showTutorial, setShowTutorial] = useState(false);  // 튜토리얼 확인 여부
   const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
-  const isMobile = useIsMobile();  // 모바일 여부
+  const isMobile = useIsMobile(1024);  // 1024px 이하는 모바일 레이아웃
 
-  
+  // PC 전용 1920x1080 디자인 → 뷰포트 비율 맞춰 scale (1024px 이하는 scale=1, 모바일 레이아웃 사용)
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const updateScale = () => {
+      if (window.innerWidth <= 1024) {
+        setScale(1);
+        return;
+      }
+      const sx = window.innerWidth / 1920;
+      const sy = window.innerHeight / 1080;
+      setScale(Math.min(1, sx, sy));
+    };
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
+
   const lastTouch = useRef(0);  // 마지막 터치 시간
   
 
@@ -346,8 +363,17 @@ export default function MainPage() {
   ];
 
   return (
-    <div className="relative w-screen h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat select-none"
+    <div className="relative w-screen h-screen overflow-hidden bg-cover bg-center bg-no-repeat select-none"
          style={{ backgroundImage: "url(/images/background_blur.png)" }}>
+      <div
+        className={isMobile ? "w-full h-full flex items-center justify-center" : "absolute left-1/2 top-1/2 flex items-center justify-center"}
+        style={isMobile ? {} : {
+          width: 1920,
+          height: 1080,
+          transform: `translate(-50%, -50%) scale(${scale})`,
+          transformOrigin: "center center",
+        }}
+      >
       {/* 장비창 */}
       <div className="relative w-[90%] sm:w-[420px] aspect-[420/509]">
         {/* 장비창 배경 */}
@@ -872,6 +898,7 @@ export default function MainPage() {
           character_class = {character.class}
         />}
     </AnimatePresence>
+    </div>
     </div>
   );
 }
