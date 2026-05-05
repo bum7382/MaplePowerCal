@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import EquipmentInfo from "../components/EquipmentInfo.jsx";
 import { calculatePower } from "../utils/calculatePower";
+import { hexaStatPower } from "../utils/initcalPower";
 import InventoryPanel from "../components/InventoryPanel.jsx";
 import EquipmentSearch from "../components/EquipmentSearch.jsx";
 import { useNavigate } from "react-router-dom";
@@ -62,6 +63,7 @@ export default function MainPage() {
 
   // 헥사스탯
   const [showHexaStat, setShowHexaStat] = useState(false);
+  const [hexaStat, setHexaStat] = useState(null); // 현재 헥사 (편집 가능, 초기값은 character에서 로드)
 
   // 기타 상태
   const navigate = useNavigate(); // 내비게이터
@@ -128,6 +130,50 @@ export default function MainPage() {
     }
   }, [character, loading, navigate]);
 
+  // 캐릭터 로드 시 hexaStat 초기화 (편집 가능한 작업 사본)
+  useEffect(() => {
+    if (character?.hexa_stat) {
+      setHexaStat(character.hexa_stat);
+    }
+  }, [character?.name]);
+
+  // 헥사 기여분을 적용한 작업용 baseStat/noPerStat 반환
+  const getStatsWithHexa = () => {
+    if (!character) return null;
+    const baseStat = { ...character.baseStat };
+    const noPerStat = { ...character.noPerStat };
+    if (hexaStat) {
+      hexaStatPower(hexaStat, character.class, baseStat, noPerStat);
+    }
+    return { baseStat, noPerStat, perStat: character.perStat };
+  };
+
+  // 장비 배열을 받아 현재 헥사 기준의 전투력 계산
+  const computePower = (equipments) => {
+    if (!character) return 0;
+    const stats = getStatsWithHexa();
+    return calculatePower(
+      equipments,
+      character.class,
+      stats.baseStat,
+      stats.noPerStat,
+      stats.perStat,
+      character.level
+    );
+  };
+
+  // EquipmentInfo에 넘길 character (헥사 적용된 baseStat 포함)
+  const characterWithHexa = (() => {
+    if (!character) return null;
+    const stats = getStatsWithHexa();
+    if (!stats) return character;
+    return {
+      ...character,
+      baseStat: stats.baseStat,
+      noPerStat: stats.noPerStat,
+      perStat: stats.perStat,
+    };
+  })();
 
   // 장비 로드
   useEffect(() => {
@@ -165,17 +211,11 @@ export default function MainPage() {
   useEffect(() => {
     if (initDone) return;
     if (!character || Object.keys(equipment).length === 0) return;
-    const basePower = calculatePower(
-      Object.values(equipment), 
-      character.class, 
-      character.baseStat, 
-      character.noPerStat, 
-      character.perStat,
-      character.level);
+    if (character.hexa_stat && !hexaStat) return; // hexaStat 초기화 대기
+    const basePower = computePower(Object.values(equipment));
     setOriginalPower(basePower);
-    console.log(equipment);
     setInitDone(true);
-  }, [character, equipment, initDone]);
+  }, [character, equipment, initDone, hexaStat]);
     
   // 전체 장비 초기화 
   const handleResetAllEquipment = () => {
@@ -183,14 +223,7 @@ export default function MainPage() {
     setSavedSlots({});
     setSlotColors({});
 
-    const newPower = calculatePower(
-      Object.values(originalEquipment),
-      character.class,
-      character.baseStat,
-      character.noPerStat,
-      character.perStat,
-      character.level
-    );
+    const newPower = computePower(Object.values(originalEquipment));
     setPowerDiff(newPower - originalPower);
 
     setShowInfo(false);
@@ -246,14 +279,7 @@ export default function MainPage() {
     setOriginalEquipment(equipment);
     
     // 바뀐 장비 프리셋으로 전투력 재계산
-    const newPower = calculatePower(
-      Object.values(equipment),
-      character.class,
-      character.baseStat,
-      character.noPerStat,
-      character.perStat,
-      character.level
-    );
+    const newPower = computePower(Object.values(equipment));
     setOriginalPower(newPower);
     setPowerDiff(0); // 적용 시 전투력 변화량 0으로
     setSlotColors({});
@@ -308,18 +334,8 @@ export default function MainPage() {
       removeCachedCharacter(character.name);  // 캐시 삭제
       setCachedCharacter(character.name, result); // 캐시 새로 저장
       setCharacter(result);
-      
-      // 전투력 재계산
-      const basePower = calculatePower(
-        result.equipment, 
-        result.class,
-        result.baseStat,
-        result.noPerStat,
-        result.perStat,
-        result.level
-      );
-      setOriginalPower(basePower);
-      
+      // hexaStat·originalPower는 character 변경 useEffect들이 자동 재계산
+
       setLoading(false);
       showToast("정보가 갱신되었습니다.", "success")
     } catch (e) {
@@ -374,7 +390,7 @@ export default function MainPage() {
         }}
       >
       {/* 장비창 */}
-      <div className="relative w-[80%] sm:w-[420px] aspect-[420/509]">
+      <div className="relative w-[90%] sm:w-[420px] aspect-[420/509]">
         {/* 장비창 배경 */}
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
         {/* 장비창 설명 */}
@@ -558,13 +574,8 @@ export default function MainPage() {
                     ...prev,
                     [name]: "transparent"
                   }));
-                  setPowerDiff(calculatePower(
-                    Object.values({ ...equipment, [name]: undefined }).filter(Boolean),
-                    character.class,
-                    character.baseStat,
-                    character.noPerStat,
-                    character.perStat,
-                    character.level
+                  setPowerDiff(computePower(
+                    Object.values({ ...equipment, [name]: undefined }).filter(Boolean)
                   ) - originalPower);
                   setShowInfo(false);
                   setInfoLocked(false);
@@ -646,13 +657,8 @@ export default function MainPage() {
                 }));
                 
                 // 전투력 재계산
-                const newPower = calculatePower(
-                  Object.values({ ...equipment, [selectedSlot]: originalEquipment[selectedSlot] }),
-                  character.class,
-                  character.baseStat,
-                  character.noPerStat,
-                  character.perStat,
-                  character.level
+                const newPower = computePower(
+                  Object.values({ ...equipment, [selectedSlot]: originalEquipment[selectedSlot] })
                 );
                 setPowerDiff(newPower - originalPower);
 
@@ -700,14 +706,12 @@ export default function MainPage() {
         </button>
 
         {/* 헥사스탯 아이콘 - To-Do*/}
-        {/*
         <button className="absolute bottom-[1.2%] left-[12%] w-[10%] transition max-sm:w-[7%]"
           onClick={() => setShowHexaStat((prev) => !prev)}>
           <img 
             src="/images/hexa/헥사메뉴.normal.png" draggable="false"
             className="custom-cursor hover:content-[url('/images/hexa/헥사메뉴.hover.png')] active:content-[url('/images/hexa/헥사메뉴.pressed.png')]"/>
         </button>
-        */}
 
         {/* 인벤토리 창 */}
         <AnimatePresence>
@@ -738,13 +742,8 @@ export default function MainPage() {
                     [selectedSlot]: item
                   }));
                   // 전투력 계산
-                  const newPower = calculatePower(
-                    Object.values({ ...equipment, [selectedSlot]: item }),
-                    character.class,
-                    character.baseStat,
-                    character.noPerStat,
-                    character.perStat,
-                    character.level
+                  const newPower = computePower(
+                    Object.values({ ...equipment, [selectedSlot]: item })
                   );
                   setPowerDiff(newPower - originalPower);
                   // slotColors 갱신
@@ -792,7 +791,7 @@ export default function MainPage() {
           }}
           originalEquipment={originalEquipment}
           currentEquipment={equipment}
-          character={character}
+          character={characterWithHexa}
           originalPower={originalPower}
           setSlotColors={setSlotColors}
           setPowerDiff={setPowerDiff}
@@ -825,7 +824,7 @@ export default function MainPage() {
               ...equipment,
               [compareSlot]: hoveredInventoryItem
             }}
-            character={character}
+            character={characterWithHexa}
             originalPower={originalPower}
             setSlotColors={() => {}}
             setPowerDiff={setPowerDiff}
@@ -866,13 +865,8 @@ export default function MainPage() {
             setInfoLocked(false);
 
             // 전투력 갱신
-            const newPower = calculatePower(
-              Object.values({ ...equipment, [selectedSlot]: { ...item, item_equipment_slot: selectedSlot } }),
-              character.class,
-              character.baseStat,
-              character.noPerStat,
-              character.perStat,
-              character.level
+            const newPower = computePower(
+              Object.values({ ...equipment, [selectedSlot]: { ...item, item_equipment_slot: selectedSlot } })
             );
             setPowerDiff(newPower - originalPower);
           }}
@@ -881,6 +875,9 @@ export default function MainPage() {
       </div>
     )}
 
+    </div>
+
+    {/* 풀스크린 모달들은 scale 래퍼 밖에 위치 (transform 영향 안 받게) */}
     {/* 튜토리얼 */}
     {showTutorial && !isMobile && <Tutorial onClose={handleTutorialClose} />}
     {showTutorial && isMobile && <TutorialMobile onClose={handleTutorialClose} />}
@@ -890,14 +887,28 @@ export default function MainPage() {
 
     {/* 헥사 스탯 */}
     <AnimatePresence>
-      {showHexaStat && 
-        <HexaStat 
-          hexaStat = {character.hexa_stat}
+      {showHexaStat &&
+        <HexaStat
+          hexaStat = {hexaStat || character.hexa_stat}
+          originalHexaStat = {character.hexa_stat}
           onClose={() => setShowHexaStat(false)}
+          onApply={(newHexaStat) => {
+            setHexaStat(newHexaStat);
+            // 새 헥사 기준으로 현재 장비 전투력 재계산 → powerDiff 갱신
+            const baseStat = { ...character.baseStat };
+            const noPerStat = { ...character.noPerStat };
+            hexaStatPower(newHexaStat, character.class, baseStat, noPerStat);
+            const newPower = calculatePower(
+              Object.values(equipment),
+              character.class,
+              baseStat, noPerStat, character.perStat,
+              character.level
+            );
+            setPowerDiff(newPower - originalPower);
+          }}
           character_class = {character.class}
         />}
     </AnimatePresence>
-    </div>
     </div>
   );
 }

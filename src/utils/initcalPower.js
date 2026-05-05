@@ -299,21 +299,22 @@ function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
   });
 }*/
 
-function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
+export function hexaStatPower(hexa_stat, character_class, baseStat, noPerStat){
+  if (!hexa_stat) return;
   const hexaCoreValue = {
-    "공격력 증가": { main: [0, 5, 10, 15, 20, 30, 40, 50, 65, 80, 100], 
+    "공격력 증가": { main: [0, 5, 10, 15, 20, 30, 40, 50, 65, 80, 100],
                      sub:  [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50] },
-    "데미지 증가": { main: [0, 0.75, 1.5, 2.25, 3, 4.5, 6, 7.5, 9.75, 12, 15], 
+    "데미지 증가": { main: [0, 0.75, 1.5, 2.25, 3, 4.5, 6, 7.5, 9.75, 12, 15],
                      sub:  [0, 0.75, 1.5, 2.25, 3, 3.75, 4.5, 5.25, 6, 6.75, 7.5] },
-    "보스 데미지 증가": { main: [0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 20], 
+    "보스 데미지 증가": { main: [0, 1, 2, 3, 4, 6, 8, 10, 13, 16, 20],
                          sub:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-    "크리티컬 데미지 증가": { main: [0, 0.35, 0.7, 1.05, 1.4, 2.10, 2.8, 3.5, 4.55, 5.6, 7], 
+    "크리티컬 데미지 증가": { main: [0, 0.35, 0.7, 1.05, 1.4, 2.10, 2.8, 3.5, 4.55, 5.6, 7],
                              sub:  [0, 0.35, 0.7, 1.05, 1.4, 1.75, 2.1, 2.45, 2.8, 3.15, 3.5] },
-    "주력 스탯 증가": { main: [0, 100, 200, 300, 400, 600, 800, 1000, 1300, 1600, 2000], 
+    "주력 스탯 증가": { main: [0, 100, 200, 300, 400, 600, 800, 1000, 1300, 1600, 2000],
                      sub:  [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
-    "올스탯 증가":   { main: [0, 48, 96, 144, 192, 288, 384, 480, 624, 768, 960], 
+    "올스탯 증가":   { main: [0, 48, 96, 144, 192, 288, 384, 480, 624, 768, 960],
                      sub:  [0, 48, 96, 144, 192, 240, 288, 336, 384, 432, 480] },
-    "최대 HP 증가":  { main: [0, 2100, 4200, 6300, 8400, 12600, 16800, 21000, 27300, 33600, 42000], 
+    "최대 HP 증가":  { main: [0, 2100, 4200, 6300, 8400, 12600, 16800, 21000, 27300, 33600, 42000],
                      sub:  [0, 2100, 4200, 6300, 8400, 10500, 12600, 14700, 16800, 18900, 21000] }
   };
 
@@ -626,7 +627,7 @@ export function initcalPower(character){
   abilityPower(character.level, character.ability, baseStat, noPerStat);
   artifactPower(character.artifact, baseStat, noPerStat);
   championPower(character.champion, baseStat, noPerStat);
-  hexaStatPower(character.hexa_stat, character.class, baseStat, noPerStat);
+  // hexaStatPower는 MainPage에서 calculatePower 직전에 별도 적용 (장비처럼 변경 가능)
   hyperStatPower(character.hyperStat, baseStat, noPerStat, perStat);
   skillPower(character.skill, baseStat, noPerStat);
   symbolPower(character.symbol, character.class, baseStat, noPerStat);

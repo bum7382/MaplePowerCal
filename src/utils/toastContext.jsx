@@ -30,7 +30,7 @@ export function ToastProvider({ children }) {
             exit={{ opacity: 0, x: "-50%", y: -20 }}
             transition={{ duration: 0.4 }}
             className={`
-              fixed top-40 left-1/2 transform -translate-x-1/2 z-[1000]
+              fixed top-20 left-1/2 transform -translate-x-1/2 z-[99999]
               px-6 py-3 rounded-lg shadow-lg font-galmuri text-base text-white
               ${type === "error" ? "bg-red-600" : "bg-[#44B7CF]"}
             `}

@@ -5,13 +5,17 @@ import jobStat from "../data/jobStat.json";
 import { useToast } from "../utils/toastContext";
 
 
-export default function HexaStat({ hexaStat, onClose, character_class }) {
+export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply, character_class }) {
   const [selectedCore, setSelectedCore] = useState("core"); // 기본값 코어1
 	const [showCoreActive, setShowCoreActive] = useState(false)	// 코어 활성화 창
 	const jobInfo = jobStat.find(j => j.class === character_class);	// 직업 정보
 	const { showToast } = useToast(); // 토스트
 	// 화면에서 조작하는 임시 레벨 상태(메인/서브1/서브2)
 	const [uiLevels, setUiLevels] = useState({ main: 0, sub1: 0, sub2: 0 });
+
+	// 저장된 프리셋 슬롯 (최대 1개) + 현재 활성 슬롯
+	const [savedHexaStat, setSavedHexaStat] = useState(null);
+	const [activeSlot, setActiveSlot] = useState("current"); // "current" | "saved"
 	
 
   const hexaCoreValue = {
@@ -106,6 +110,14 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 			sub1: node?.sub_stat_level_1 ?? 0,
 			sub2: node?.sub_stat_level_2 ?? 0,
 		});
+		// API에 preset_hexa_stat_*가 있으면 두 번째 슬롯으로 자동 로드
+		const presetNode = hexaStat?.[`preset_hexa_stat_${selectedCore}`]?.[0];
+		if (presetNode) {
+			setSavedHexaStat({
+				...hexaStat,
+				[`character_hexa_stat_${selectedCore}`]: [presetNode],
+			});
+		}
 	}, [selectedCore, hexaStat]);
 
 	// 유틸
@@ -114,26 +126,93 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 
 	// 합 20 초과 방지 + 0~10 사이
 	const trySet = (next) => {
-		const clamped = {
-			main: clamp(next.main),
-			sub1: clamp(next.sub1),
-			sub2: clamp(next.sub2),
-		};
-		if (sum(clamped) > 20) {
+		// 개별 10 초과 또는 합 20 초과면 토스트 (clamp 전에 검사)
+		const overIndividual = next.main > 10 || next.sub1 > 10 || next.sub2 > 10;
+		const overSum = sum(next) > 20;
+		if (overIndividual || overSum) {
 			showToast("각 스탯의 전체 레벨 합은 20을 넘을 수 없습니다.", "error");
-			return; // 반영하지 않음
+			return;
 		}
-		setUiLevels(clamped);
+		// 0 미만은 조용히 무시 (이미 0인 상태에서 dec)
+		if (next.main < 0 || next.sub1 < 0 || next.sub2 < 0) return;
+		setUiLevels(next);
 	};
 
 	const inc = (key) => trySet({ ...uiLevels, [key]: uiLevels[key] + 1 });
 	const dec = (key) => trySet({ ...uiLevels, [key]: uiLevels[key] - 1 });
 
+	// 적용하기: 현재 selectedCore의 레벨을 uiLevels로 갱신한 새 hexaStat 객체를 부모에 전달
+	const handleApply = () => {
+		const coreKey = `character_hexa_stat_${selectedCore}`;
+		const oldNode = hexaStat?.[coreKey]?.[0] || {};
+		const newHexaStat = {
+			...hexaStat,
+			[coreKey]: [{
+				...oldNode,
+				main_stat_level: uiLevels.main,
+				sub_stat_level_1: uiLevels.sub1,
+				sub_stat_level_2: uiLevels.sub2,
+			}],
+		};
+		onApply?.(newHexaStat);
+		showToast("헥사스탯이 적용되었습니다.", "success");
+	};
+
+	// 초기화: 캐릭터 처음 불러왔을 때 값으로 복원 (UI + 부모 state 모두)
+	const handleReset = () => {
+		const source = originalHexaStat || hexaStat;
+		const node = source?.[`character_hexa_stat_${selectedCore}`]?.[0];
+		setUiLevels({
+			main: node?.main_stat_level ?? 0,
+			sub1: node?.sub_stat_level_1 ?? 0,
+			sub2: node?.sub_stat_level_2 ?? 0,
+		});
+		// 부모 state도 원본으로 되돌려서 powerDiff 재계산
+		if (originalHexaStat) onApply?.(originalHexaStat);
+		showToast("초기화되었습니다.", "success");
+	};
+
+	// 저장: 현재 uiLevels을 두 번째 슬롯(savedHexaStat)에 저장
+	const handleSave = () => {
+		const coreKey = `character_hexa_stat_${selectedCore}`;
+		const oldNode = hexaStat?.[coreKey]?.[0] || {};
+		const snapshot = {
+			...hexaStat,
+			[coreKey]: [{
+				...oldNode,
+				main_stat_level: uiLevels.main,
+				sub_stat_level_1: uiLevels.sub1,
+				sub_stat_level_2: uiLevels.sub2,
+			}],
+		};
+		setSavedHexaStat(snapshot);
+		showToast("프리셋이 저장되었습니다.", "success");
+	};
+
+	// 슬롯 클릭: 활성 슬롯 전환 + uiLevels 로드
+	const handleSlotClick = (slot) => {
+		if (slot === "saved" && !savedHexaStat) return;
+		setActiveSlot(slot);
+		const source = slot === "saved" ? savedHexaStat : hexaStat;
+		const node = source?.[`character_hexa_stat_${selectedCore}`]?.[0];
+		setUiLevels({
+			main: node?.main_stat_level ?? 0,
+			sub1: node?.sub_stat_level_1 ?? 0,
+			sub2: node?.sub_stat_level_2 ?? 0,
+		});
+	};
+
+	// 능력치 변경: TODO - 메인/서브 스탯 종류 변경 모달
+	const handleStatChange = () => {
+		showToast("능력치 변경은 추후 지원 예정입니다.", "error");
+	};
+
   return (
 		<motion.div
+			initial={{ opacity: 0 }}
 			animate={{ opacity: 1, y: 0 }}
 			exit={{ opacity: 0, y: 0 }}
-			transition={{ duration: 0.2, ease: "easeOut" }}
+			transition={{ duration: 0.3, ease: "easeOut" }}
 		>
 			<div className="fixed top-0 left-0 w-full h-full z-[9999]">
 				{/* 헥사 메인 배경 */}
@@ -192,42 +271,56 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 
 				{/* 개방 코어 탭 - 프리셋 존재 */}
 				{coreUnlocked[selectedCore] && (
-					// 현재 코어
-					<div className="absolute top-[33.3%] left-[53.35%] z-20 select-none">
+					// 현재 코어 슬롯
+					<div
+						className="absolute top-[33.3%] left-[53.35%] z-20 select-none cursor-pointer"
+						onClick={() => handleSlotClick("current")}
+					>
 						<span className="absolute top-[20%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
 							{(corelevel[selectedCore] + "").split("").join(" ")}
 						</span>
-						<img
-							src="/images/hexa/코어.bg.png"
-							alt="코어 슬롯"
-							draggable={false}
-						/>
+						<img src="/images/hexa/코어.bg.png" alt="코어 슬롯" draggable={false} />
 						<img
 							src={`/images/hexa/헥사스탯${selectedCore}.png`}
 							alt="코어 아이콘"
 							className="absolute top-[56%] left-1/2 -translate-x-1/2 -translate-y-1/2"
 							draggable={false}
 						/>
+						{activeSlot === "current" && (
+							<img
+								src="/images/hexa/헥사적용.png"
+								alt="적용됨"
+								className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+								draggable={false}
+							/>
+						)}
 					</div>
 				)}
 
-				{corePresetUnlocked[selectedCore] && (
-					// 프리셋 코어
-					<div className="absolute top-[34.5%] left-[61.5%] z-20 select-none">
+				{savedHexaStat && (
+					// 저장된 프리셋 슬롯
+					<div
+						className="absolute top-[34.5%] left-[61.5%] z-20 select-none cursor-pointer"
+						onClick={() => handleSlotClick("saved")}
+					>
 						<span className="absolute top-[19%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
 							{(corelevel[selectedCore] + "").split("").join(" ")}
 						</span>
-						<img
-							src="/images/hexa/코어.bg.png"
-							alt="코어 슬롯"
-							draggable={false}
-						/>
+						<img src="/images/hexa/코어.bg.png" alt="코어 슬롯" draggable={false} />
 						<img
 							src={`/images/hexa/헥사스탯${selectedCore}.png`}
 							alt="코어 아이콘"
 							className="absolute top-[56%] left-1/2 -translate-x-1/2 -translate-y-1/2"
 							draggable={false}
 						/>
+						{activeSlot === "saved" && (
+							<img
+								src="/images/hexa/헥사적용.png"
+								alt="적용됨"
+								className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+								draggable={false}
+							/>
+						)}
 					</div>
 				)}
 
@@ -397,10 +490,9 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 
 				{corePresetUnlocked[selectedCore] && (
 					// 레벨 올리기 / 내리기 (텍스트 버튼)
-					<div className="absolute z-30 top-[60.8%] left-[47.8%] text-white font-dotum text-[13px] select-none">
+					<div className="absolute z-30 top-[52.5%] left-[47.8%] text-white font-dotum text-[13px] select-none">
 						{/* 메인 */}
 						<div className="flex items-center gap-3 mb-2">
-							<span className="w-[94px] text-[#D4C6F0]">메인</span>
 							<button
 								type="button"
 								className="underline hover:opacity-80"
@@ -418,8 +510,7 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 						</div>
 
 						{/* 서브1 */}
-						<div className="flex items-center gap-3 mb-2 mt-[18%]">
-							<span className="w-[94px] text-[#B6E3F0]">서브 스탯 1</span>
+						<div className="flex items-center gap-3 mb-2 mt-[60%]">
 							<button
 								type="button"
 								className="underline hover:opacity-80"
@@ -437,8 +528,7 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 						</div>
 
 						{/* 서브2 */}
-						<div className="flex items-center gap-3 mt-[9.8%]">
-							<span className="w-[94px] text-[#B6E3F0]">서브 스탯 2</span>
+						<div className="flex items-center gap-3 mt-[35%]">
 							<button
 								type="button"
 								className="underline hover:opacity-80"
@@ -458,29 +548,81 @@ export default function HexaStat({ hexaStat, onClose, character_class }) {
 				)}
 
 				{coreUnlocked[selectedCore] && (
-					<button
-						className="absolute bottom-[20.7%] right-[38%]"
-					>
-						<img
-							src="/images/hexa/적용하기.normal.png"
-							alt="적용하기"
-							className="
-								hover:content-[url('/images/hexa/적용하기.hover.png')]
-								active:content-[url('/images/hexa/적용하기.pressed.png')]
-							"
-						/>
-					</button>
+					<>
+						{/* 능력치 변경 */}
+						<button
+							type="button"
+							className="absolute bottom-[20.7%] right-[49.25%] custom-cursor"
+							onClick={handleStatChange}
+						>
+							<img
+								src="/images/hexa/능력치변경.normal.png"
+								alt="능력치 변경"
+								className="
+									hover:content-[url('/images/hexa/능력치변경.hover.png')]
+									active:content-[url('/images/hexa/능력치변경.pressed.png')]
+								"
+							/>
+						</button>
+
+						{/* 적용하기 */}
+						<button
+							type="button"
+							className="absolute bottom-[20.7%] right-[38%] custom-cursor"
+							onClick={handleApply}
+						>
+							<img
+								src="/images/hexa/적용하기.normal.png"
+								alt="적용하기"
+								className="
+									hover:brightness-110
+									active:content-[url('/images/hexa/적용하기.pressed.png')]
+								"
+							/>
+						</button>
+
+						{/* 저장 */}
+						<button
+							type="button"
+							className="absolute bottom-[20.7%] right-[31.5%] custom-cursor"
+							onClick={handleSave}
+						>
+							<img
+								src="/images/hexa/저장.normal.png"
+								alt="저장"
+								className="
+									hover:content-[url('/images/hexa/저장.hover.png')]
+									active:content-[url('/images/hexa/저장.pressed.png')]
+								"
+							/>
+						</button>
+
+						{/* 초기화 */}
+						<button
+							type="button"
+							className="absolute bottom-[20.7%] right-[28.7%] custom-cursor"
+							onClick={handleReset}
+						>
+							<img
+								src="/images/hexa/초기화.normal.png"
+								alt="초기화"
+								className="
+									hover:content-[url('/images/hexa/초기화.hover.png')]
+									active:content-[url('/images/hexa/초기화.pressed.png')]
+								"
+							/>
+						</button>
+					</>
 				)}
 
 
-				{coreUnlocked[selectedCore] && corePresetUnlocked[selectedCore] && (
-					<div className="absolute top-[30%] left-[51.15%] z-10">
-						<img src="/images/hexa/헥사레이어탭1.png" alt="헥사 그림자" className="absolute bottom-[5%] left-0 scale-[115%] z-0" />
-						<div className="relative flex gap-[6px] z-10">
-							<img src="/images/hexa/헥사스탯selected.png" alt="헥사스탯 프리셋" />
-							<img src="/images/hexa/헥사스탯normal.png" alt="헥사스탯 프리셋" />
-						</div>
-					</div>
+				{coreUnlocked[selectedCore] && (
+					<img
+						src={activeSlot === "saved" ? "/images/hexa/헥사레이어탭2.png" : "/images/hexa/헥사레이어탭1.png"}
+						alt="헥사 레이어 탭"
+						className="absolute top-[28%] left-[51.15%] z-10 pointer-events-none"
+						draggable={false}
+					/>
 				)}
 				
 
