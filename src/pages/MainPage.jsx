@@ -71,7 +71,7 @@ export default function MainPage() {
   const [isFavorite, setIsFavorite] = useState(false);  // 즐겨찾기 여부
   const isMobile = useIsMobile(1024);  // 1024px 이하는 모바일 레이아웃
 
-  // PC 전용 1920x1080 디자인 → 뷰포트 비율 맞춰 scale (1024px 이하는 scale=1, 모바일 레이아웃 사용)
+  // PC 전용 1920x1080 디자인 → 가로 기준 scale (1024px 이하는 모바일 레이아웃)
   const [scale, setScale] = useState(1);
   useEffect(() => {
     const updateScale = () => {
@@ -79,9 +79,8 @@ export default function MainPage() {
         setScale(1);
         return;
       }
-      const sx = window.innerWidth / 1920;
-      const sy = window.innerHeight / 1080;
-      setScale(Math.min(1, sx, sy));
+      // 가로 기준만 사용: 1920+ 에서는 항상 1:1, 그 미만에서만 비율 축소
+      setScale(Math.min(1, window.innerWidth / 1920));
     };
     updateScale();
     window.addEventListener("resize", updateScale);
