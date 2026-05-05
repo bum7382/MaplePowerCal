@@ -9,7 +9,11 @@ export default defineConfig({
   server: {
     allowedHosts: ['540418742063.ngrok-free.app'],
     proxy: {
-      '/api': 'https://maple-power-cal.vercel.app',
+      '/api': {
+        target: 'https://maplepowercal.com',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   resolve: {

@@ -536,7 +536,7 @@ export default function EquipmentInfo({
           // 콤팩트: 뷰포트 하단에 고정, 페이지 스크롤과 무관하게 항상 보임
           ? "fixed bottom-2 left-1/2 -translate-x-1/2 w-[90vw] max-w-[450px] max-h-[55vh]"
           // PC 스케일: 디자인 좌표에서 사이드 모달
-          : "absolute left-[180px] top-[30px] w-[450px] max-h-[90vh]"
+          : "absolute left-[180px] top-[150px] w-[450px] max-h-[90vh]"
       )}>
         <button className="absolute top-2 right-2 text-gray-300 hover:text-white" onClick={onClose}>✕</button>
         {/* 스타포스 별 */}
@@ -716,7 +716,7 @@ export default function EquipmentInfo({
           isMobile
             // 콤팩트: 뷰포트 상단에 고정. 메인 모달은 하단에 있으므로 위에 띄움
             ? "fixed top-2 left-1/2 -translate-x-1/2 w-[90vw] max-h-[40vh] overflow-y-auto"
-            : "absolute left-[calc(180px+450px+24px)] top-[30px]"
+            : "absolute left-[calc(180px+450px+24px)] top-[150px]"
         )}>
           {editable && showScrollModal && (
             <ScrollModal 

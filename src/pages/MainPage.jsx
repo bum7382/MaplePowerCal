@@ -374,7 +374,7 @@ export default function MainPage() {
         }}
       >
       {/* 장비창 */}
-      <div className="relative w-[90%] sm:w-[420px] aspect-[420/509]">
+      <div className="relative w-[80%] sm:w-[420px] aspect-[420/509]">
         {/* 장비창 배경 */}
         <img src="/images/inventory/equipment_bg.png" draggable="false" className="absolute inset-0 w-full h-full" />
         {/* 장비창 설명 */}
