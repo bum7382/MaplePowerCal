@@ -64,6 +64,9 @@ export default function MainPage() {
   // 헥사스탯
   const [showHexaStat, setShowHexaStat] = useState(false);
   const [hexaStat, setHexaStat] = useState(null); // 현재 헥사 (편집 가능, 초기값은 character에서 로드)
+  // 모달 닫혀도 유지되는 헥사 슬롯 상태 (코어별)
+  const [hexaSavedStats, setHexaSavedStats] = useState({ core: null, core_2: null, core_3: null });
+  const [hexaActiveSlots, setHexaActiveSlots] = useState({ core: "current", core_2: "current", core_3: "current" });
 
   // 기타 상태
   const navigate = useNavigate(); // 내비게이터
@@ -706,12 +709,14 @@ export default function MainPage() {
         </button>
 
         {/* 헥사스탯 아이콘 - To-Do*/}
+        {/* 
         <button className="absolute bottom-[1.2%] left-[12%] w-[10%] transition max-sm:w-[7%]"
           onClick={() => setShowHexaStat((prev) => !prev)}>
           <img 
             src="/images/hexa/헥사메뉴.normal.png" draggable="false"
             className="custom-cursor hover:content-[url('/images/hexa/헥사메뉴.hover.png')] active:content-[url('/images/hexa/헥사메뉴.pressed.png')]"/>
         </button>
+        */}
 
         {/* 인벤토리 창 */}
         <AnimatePresence>
@@ -891,6 +896,10 @@ export default function MainPage() {
         <HexaStat
           hexaStat = {hexaStat || character.hexa_stat}
           originalHexaStat = {character.hexa_stat}
+          savedHexaStats = {hexaSavedStats}
+          setSavedHexaStats = {setHexaSavedStats}
+          activeSlots = {hexaActiveSlots}
+          setActiveSlots = {setHexaActiveSlots}
           onClose={() => setShowHexaStat(false)}
           onApply={(newHexaStat) => {
             setHexaStat(newHexaStat);

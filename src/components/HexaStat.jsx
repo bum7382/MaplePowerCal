@@ -5,7 +5,17 @@ import jobStat from "../data/jobStat.json";
 import { useToast } from "../utils/toastContext";
 
 
-export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply, character_class }) {
+export default function HexaStat({
+  hexaStat,
+  originalHexaStat,
+  savedHexaStats,
+  setSavedHexaStats,
+  activeSlots,
+  setActiveSlots,
+  onClose,
+  onApply,
+  character_class,
+}) {
   const [selectedCore, setSelectedCore] = useState("core"); // 기본값 코어1
 	const [showCoreActive, setShowCoreActive] = useState(false)	// 코어 활성화 창
 	const jobInfo = jobStat.find(j => j.class === character_class);	// 직업 정보
@@ -13,9 +23,9 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
 	// 화면에서 조작하는 임시 레벨 상태(메인/서브1/서브2)
 	const [uiLevels, setUiLevels] = useState({ main: 0, sub1: 0, sub2: 0 });
 
-	// 저장된 프리셋 슬롯 (최대 1개) + 현재 활성 슬롯
-	const [savedHexaStat, setSavedHexaStat] = useState(null);
-	const [activeSlot, setActiveSlot] = useState("current"); // "current" | "saved"
+	// per-core 상태는 부모(MainPage)에서 props로 전달 (모달 닫혀도 유지)
+	const savedHexaStat = savedHexaStats?.[selectedCore] ?? null;
+	const activeSlot = activeSlots?.[selectedCore] ?? "current";
 	
 
   const hexaCoreValue = {
@@ -102,21 +112,28 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
     );
   };
 
-	// 코어 선택 또는 hexaStat 변경 시, 서버/원본 데이터로부터 초기화
+	// 코어 선택 또는 hexaStat 변경 시, 활성 슬롯에 맞춰 uiLevels 초기화
 	useEffect(() => {
-		const node = hexaStat?.[`character_hexa_stat_${selectedCore}`]?.[0];
+		const slot = activeSlots?.[selectedCore] ?? "current";
+		const source = (slot === "saved" && savedHexaStats?.[selectedCore]) || hexaStat;
+		const node = source?.[`character_hexa_stat_${selectedCore}`]?.[0];
 		setUiLevels({
 			main: node?.main_stat_level ?? 0,
 			sub1: node?.sub_stat_level_1 ?? 0,
 			sub2: node?.sub_stat_level_2 ?? 0,
 		});
-		// API에 preset_hexa_stat_*가 있으면 두 번째 슬롯으로 자동 로드
-		const presetNode = hexaStat?.[`preset_hexa_stat_${selectedCore}`]?.[0];
-		if (presetNode) {
-			setSavedHexaStat({
-				...hexaStat,
-				[`character_hexa_stat_${selectedCore}`]: [presetNode],
-			});
+		// API에 preset_hexa_stat_*가 있으면 해당 코어의 두 번째 슬롯으로 자동 로드 (이미 저장된 경우 유지)
+		if (!savedHexaStats?.[selectedCore]) {
+			const presetNode = hexaStat?.[`preset_hexa_stat_${selectedCore}`]?.[0];
+			if (presetNode) {
+				setSavedHexaStats(prev => ({
+					...prev,
+					[selectedCore]: {
+						...hexaStat,
+						[`character_hexa_stat_${selectedCore}`]: [presetNode],
+					},
+				}));
+			}
 		}
 	}, [selectedCore, hexaStat]);
 
@@ -172,7 +189,7 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
 		showToast("초기화되었습니다.", "success");
 	};
 
-	// 저장: 현재 uiLevels을 두 번째 슬롯(savedHexaStat)에 저장
+	// 저장: 현재 uiLevels을 해당 코어의 두 번째 슬롯에 저장
 	const handleSave = () => {
 		const coreKey = `character_hexa_stat_${selectedCore}`;
 		const oldNode = hexaStat?.[coreKey]?.[0] || {};
@@ -185,14 +202,14 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
 				sub_stat_level_2: uiLevels.sub2,
 			}],
 		};
-		setSavedHexaStat(snapshot);
+		setSavedHexaStats(prev => ({ ...prev, [selectedCore]: snapshot }));
 		showToast("프리셋이 저장되었습니다.", "success");
 	};
 
-	// 슬롯 클릭: 활성 슬롯 전환 + uiLevels 로드
+	// 슬롯 클릭: 해당 코어의 활성 슬롯 전환 + uiLevels 로드
 	const handleSlotClick = (slot) => {
 		if (slot === "saved" && !savedHexaStat) return;
-		setActiveSlot(slot);
+		setActiveSlots(prev => ({ ...prev, [selectedCore]: slot }));
 		const source = slot === "saved" ? savedHexaStat : hexaStat;
 		const node = source?.[`character_hexa_stat_${selectedCore}`]?.[0];
 		setUiLevels({
@@ -271,9 +288,9 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
 
 				{/* 개방 코어 탭 - 프리셋 존재 */}
 				{coreUnlocked[selectedCore] && (
-					// 현재 코어 슬롯
+					// 현재 코어 슬롯 - 활성 시 위로 올라옴
 					<div
-						className="absolute top-[33.3%] left-[53.35%] z-20 select-none cursor-pointer"
+						className={`absolute ${activeSlot === "current" ? "top-[33.3%]" : "top-[34.5%]"} left-[53.35%] z-20 select-none cursor-pointer`}
 						onClick={() => handleSlotClick("current")}
 					>
 						<span className="absolute top-[20%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
@@ -290,34 +307,40 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
 							<img
 								src="/images/hexa/헥사적용.png"
 								alt="적용됨"
-								className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+								className="absolute bottom-[100%] left-[115%] z-30 pointer-events-none"
 								draggable={false}
 							/>
 						)}
 					</div>
 				)}
 
-				{savedHexaStat && (
-					// 저장된 프리셋 슬롯
+				{coreUnlocked[selectedCore] && (
+					// 저장된 프리셋 슬롯 - savedHexaStat 없으면 코어.lock 표시
 					<div
-						className="absolute top-[34.5%] left-[61.5%] z-20 select-none cursor-pointer"
-						onClick={() => handleSlotClick("saved")}
+						className={`absolute ${activeSlot === "saved" ? "top-[33.3%]" : "top-[34.5%]"} left-[61.5%] z-20 select-none ${savedHexaStat ? "cursor-pointer" : ""}`}
+						onClick={() => savedHexaStat && handleSlotClick("saved")}
 					>
-						<span className="absolute top-[19%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
-							{(corelevel[selectedCore] + "").split("").join(" ")}
-						</span>
-						<img src="/images/hexa/코어.bg.png" alt="코어 슬롯" draggable={false} />
-						<img
-							src={`/images/hexa/헥사스탯${selectedCore}.png`}
-							alt="코어 아이콘"
-							className="absolute top-[56%] left-1/2 -translate-x-1/2 -translate-y-1/2"
-							draggable={false}
-						/>
-						{activeSlot === "saved" && (
+						{savedHexaStat ? (
+							<>
+								<span className="absolute top-[19%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
+									{(corelevel[selectedCore] + "").split("").join(" ")}
+								</span>
+								<img src="/images/hexa/코어.bg.png" alt="코어 슬롯" draggable={false} />
+								<img
+									src={`/images/hexa/헥사스탯${selectedCore}.png`}
+									alt="코어 아이콘"
+									className="absolute top-[56%] left-1/2 -translate-x-1/2 -translate-y-1/2"
+									draggable={false}
+								/>
+							</>
+						) : (
+							<img src="/images/hexa/코어.lock.png" alt="잠긴 슬롯" draggable={false} />
+						)}
+						{savedHexaStat && activeSlot === "saved" && (
 							<img
 								src="/images/hexa/헥사적용.png"
 								alt="적용됨"
-								className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+								className="absolute bottom-[100%] left-[115%] z-30 pointer-events-none"
 								draggable={false}
 							/>
 						)}
@@ -617,12 +640,32 @@ export default function HexaStat({ hexaStat, originalHexaStat, onClose, onApply,
 
 
 				{coreUnlocked[selectedCore] && (
-					<img
-						src={activeSlot === "saved" ? "/images/hexa/헥사레이어탭2.png" : "/images/hexa/헥사레이어탭1.png"}
-						alt="헥사 레이어 탭"
-						className="absolute top-[28%] left-[51.15%] z-10 pointer-events-none"
-						draggable={false}
-					/>
+					<div className="absolute top-[30%] left-[51.15%] z-10">
+						{/* 활성 슬롯에 따라 헥사레이어탭1/2 (작은 탭 아이콘 위에 오버레이) */}
+						<img
+							src={activeSlot === "saved" ? "/images/hexa/헥사레이어탭2.png" : "/images/hexa/헥사레이어탭1.png"}
+							alt="헥사 레이어 탭"
+							className="absolute bottom-[5%] left-0 scale-[115%] z-10 pointer-events-none"
+							draggable={false}
+						/>
+						{/* 작은 탭 아이콘들 (현재/저장) */}
+						<div className="relative flex gap-[6px] z-0">
+							<img
+								src={activeSlot === "current" ? "/images/hexa/헥사스탯selected.png" : "/images/hexa/헥사스탯normal.png"}
+								alt="현재 슬롯 탭"
+								className="cursor-pointer"
+								onClick={() => handleSlotClick("current")}
+							/>
+							{savedHexaStat && (
+								<img
+									src={activeSlot === "saved" ? "/images/hexa/헥사스탯selected.png" : "/images/hexa/헥사스탯normal.png"}
+									alt="저장 슬롯 탭"
+									className="cursor-pointer"
+									onClick={() => handleSlotClick("saved")}
+								/>
+							)}
+						</div>
+					</div>
 				)}
 				
 
