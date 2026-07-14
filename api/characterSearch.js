@@ -86,6 +86,8 @@ export default async function handler(req, res) {
       () => fetchWithRetry(`${API_URL}/maplestory/v1/character/pet-equipment?ocid=${ocid}`, headers),
       // 14. 성향
       () => fetchWithRetry(`${API_URL}/maplestory/v1/character/propensity?ocid=${ocid}`, headers),
+      // 15. 기타 능력치 영향 요소
+      () => fetchWithRetry(`${API_URL}/maplestory/v1/character/other-stat?ocid=${ocid}`, headers),
     ];
 
     // 5개씩 1.2초 대기하며 순차 실행 (limit, delayMs 값은 상황에 따라 조정 가능)
@@ -102,7 +104,8 @@ export default async function handler(req, res) {
       artifact,   // 11. 유니온 아티팩트
       champion,   // 12. 유니온 챔피언
       pet,        // 13. 펫
-      propensity  // 14. 성향
+      propensity,  // 14. 성향
+      otherStat   // 15. 기타 능력치 영향 요소
     ] = await fetchWithLimit(fetchFns, 5, 1200);
     // 결과 파싱 (원본과 동일)
     const combatPowerObj = stat.final_stat ? stat.final_stat.find(s => s.stat_name === "전투력") : null;
@@ -112,6 +115,11 @@ export default async function handler(req, res) {
     const presetNo = hyperStat.use_preset_no || "1";
     const presetKey = `hyper_stat_preset_${presetNo}`;
     const preset = hyperStat[presetKey] || [];
+
+    // 기타 능력치 중 '의문의 결계'의 stat_info만 추출
+    const barrierStat = otherStat.other_stat?.find(
+      s => s.other_stat_type === "[챌린저스] 의문의 결계"
+    )?.stat_info || [];
 
     // 필요한 데이터만 합쳐서 반환
     res.status(200).json({
@@ -143,6 +151,7 @@ export default async function handler(req, res) {
         pet_3_equipment: pet.pet_3_equipment
       },
       willingness_level: propensity.willingness_level,
+      other_stat: barrierStat,
     });
 
   } catch (err) {

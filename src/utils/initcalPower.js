@@ -1,4 +1,5 @@
 import jobStat from "../data/jobStat.json";
+import challengersSkill from "../data/challengersSkill.json";
 
 // 0. 기본 스탯
 function basicPower(character_level, character_class, baseStat, noPerStat){
@@ -421,10 +422,37 @@ function hyperStatPower(hyperStat, baseStat, noPerStat, perStat) {
   });
 }
 
+// 챌린저스 스킬: 이름 매칭으로 고정 버프 적용
+// 매칭되면 true 반환 → 호출부에서 skill_effect 문구 파싱을 건너뜀 (중복 방지)
+function applyChallengersSkill(skill_name, baseStat) {
+  if (!skill_name) return false;
+  const bonus = challengersSkill[skill_name];
+  if (!bonus) return false;
+
+  for (const [key, value] of Object.entries(bonus)) {
+    switch (key) {
+      case "공격력": baseStat.atk += value; break;
+      case "마력": baseStat.magic += value; break;
+      case "올스탯":
+        ["STR", "DEX", "INT", "LUK"].forEach(s => baseStat[s] += value);
+        break;
+      case "보스 몬스터 공격 시 데미지": baseStat.boss_damage += value; break;
+      case "데미지": baseStat.damage += value; break;
+      case "크리티컬 데미지": baseStat.crit_damage += value; break;
+      case "최대 HP": baseStat.HP += value; break;
+      // 몬스터 방어율 무시 등 전투력 공식 미사용 항목은 무시
+    }
+  }
+  return true;
+}
+
 // 7. 스킬
 function skillPower(skill, baseStat, noPerStat) {
   const powerSkillNames = ["정령의 축복", "여제의 축복"];
   skill.forEach(({ skill_name, skill_effect }) => {
+    // 챌린저스 스킬은 skill_effect 파싱 대신 이름 매칭으로 처리 (매칭되면 파싱 스킵)
+    if (applyChallengersSkill(skill_name, baseStat)) return;
+
     if (!skill_effect) return;
 
     // 여러 줄로 들어온 경우 한 줄씩 체크
@@ -590,6 +618,57 @@ function willingnessPower(willingness_level, baseStat){
   baseStat.HP += Math.floor(willingness_level / 5) * 100;
 }
 
+// 12. 의문의 결계 (챌린저스)
+function barrierPower(barrier, baseStat, noPerStat, perStat){
+  if (!Array.isArray(barrier)) return;
+
+  barrier.forEach(({ stat_name, stat_value }) => {
+    if (!stat_name) return;
+    const value = Number(stat_value) || 0;
+    if (!value) return;
+
+    // "INT (+%)" 처럼 % 항목인지 판별하고, 이름만 추출 ("INT")
+    const isPercent = stat_name.includes("%");
+    const name = stat_name.replace(/\s*\(\+?%\)/, "").trim();
+
+    if (isPercent) {
+      // % 스탯 → perStat (장비 % 처럼 곱연산)
+      switch (name) {
+        case "STR": perStat.STR += value; break;
+        case "DEX": perStat.DEX += value; break;
+        case "INT": perStat.INT += value; break;
+        case "LUK": perStat.LUK += value; break;
+        case "공격력": perStat.atk += value; break;
+        case "마력": perStat.magic += value; break;
+        case "최대 HP": perStat.HP += value; break;
+        case "올스탯":
+          ["STR", "DEX", "INT", "LUK"].forEach(k => perStat[k] += value);
+          break;
+      }
+    } else {
+      // 고정 스탯 → 곱연산 안 받는 noPerStat (하이퍼/심볼과 동일 취급)
+      switch (name) {
+        case "STR": noPerStat.STR += value; break;
+        case "DEX": noPerStat.DEX += value; break;
+        case "INT": noPerStat.INT += value; break;
+        case "LUK": noPerStat.LUK += value; break;
+        case "공격력": baseStat.atk += value; break;
+        case "마력": baseStat.magic += value; break;
+        case "최대 HP": baseStat.HP += value; break;
+        case "올스탯":
+          ["STR", "DEX", "INT", "LUK"].forEach(k => noPerStat[k] += value);
+          break;
+      }
+    }
+  });
+}
+
+// 12. 의문의 결계
+function mysteriousBarrier(barrier, baseStat, perStat){
+
+
+}
+
 export function initcalPower(character){
   const baseStat = {
     STR: 0,
@@ -634,5 +713,6 @@ export function initcalPower(character){
   unionPower(character.union, baseStat, noPerStat, perStat);
   petPower(character.pet, baseStat, noPerStat);
   willingnessPower(character.willingness_level, baseStat)
+  barrierPower(character.barrier, baseStat, noPerStat, perStat);
   return {baseStat, noPerStat, perStat};
 }

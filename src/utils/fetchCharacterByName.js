@@ -24,7 +24,8 @@ export async function fetchCharacterByName(name) {
       artifact: result.artifact,      // 아티팩트
       champion: result.champion,      // 유니온 챔피언
       pet: result.pet,                 // 펫 장비
-      willingness_level: result.willingness_level   // 성향 의지 레벨
+      willingness_level: result.willingness_level,   // 성향 의지 레벨
+      barrier: result.other_stat    // 의문의 결계
     }
 
     const { baseStat, noPerStat, perStat } = initcalPower(basicPowerChar);
@@ -45,7 +46,6 @@ export async function fetchCharacterByName(name) {
       equipment_preset_3: result.item_preset3,  // 3번 프리셋 장비
       hexa_stat: result.hexa_stat,  // 헥사 스탯
     };
-    console.log(mappedChar)
     return mappedChar;
   } catch (err) {
     console.log(err)

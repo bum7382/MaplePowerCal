@@ -43,4 +43,5 @@
 {"class":"키네시스","main_stat":"INT","sub_stat":"LUK"},
 {"class":"라라","main_stat":"INT","sub_stat":"LUK"},
 {"class":"호영","main_stat":"LUK","sub_stat":"DEX"},
-{"class":"렌","main_stat":"STR","sub_stat":"DEX"}]
+{"class":"렌","main_stat":"STR","sub_stat":"DEX"},
+{"class":"레테","main_stat":"INT","sub_stat":"LUK"}]

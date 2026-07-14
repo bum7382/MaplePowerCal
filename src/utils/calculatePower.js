@@ -304,7 +304,8 @@ export function calculatePower(equipments, character_class, initialStat, noPerSt
     finalDmg,
     finalCrit,
     power
-  });*/
+  });
+  */
 
   return isNaN(power) ? 0 : power;
 }
