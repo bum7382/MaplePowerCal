@@ -18,6 +18,31 @@ export default function HexaStat({
 }) {
   const [selectedCore, setSelectedCore] = useState("core"); // 기본값 코어1
 	const [showCoreActive, setShowCoreActive] = useState(false)	// 코어 활성화 창
+
+	// ── 헥사 창 디자인 기준 크기 ─────────────────────────────────────────
+	// 이 창의 조각들은 "뷰포트의 %" 좌표 + 고정 픽셀 이미지로 되어 있어서,
+	// 조각들이 완벽히 정렬됐던 "특정 뷰포트 크기(px)"를 기준으로 박스를 고정해야
+	// 그 뒤부터 판 전체를 통째로(transform scale) 스케일할 수 있다.
+	//
+	// CALIBRATION=true : 화면 좌상단에 현재 뷰포트 크기 표시, 레이아웃은 원본(스케일 없음).
+	//                    창이 완벽히 보이는 크기로 브라우저를 맞춘 뒤 그 숫자를 아래에 적고
+	//                    CALIBRATION=false 로 끄면, 그 레이아웃이 고정되어 통째로 스케일된다.
+	const CALIBRATION = false;
+	const DESIGN_W = 1920; // 조각들이 정렬되는 기준 뷰포트 크기 (보정으로 확정)
+	const DESIGN_H = 945;
+
+	const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
+	useEffect(() => {
+		const update = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+		update();
+		window.addEventListener("resize", update);
+		return () => window.removeEventListener("resize", update);
+	}, []);
+
+	// 보정 모드에선 박스=뷰포트, 스케일=1 (원본과 동일). 실사용에선 디자인 박스 고정 + 가로 기준 스케일.
+	const boxW = CALIBRATION ? viewport.w : DESIGN_W;
+	const boxH = CALIBRATION ? viewport.h : DESIGN_H;
+	const scale = CALIBRATION ? 1 : Math.min(1, viewport.w / DESIGN_W);
 	const jobInfo = jobStat.find(j => j.class === character_class);	// 직업 정보
 	const { showToast } = useToast(); // 토스트
 	// 화면에서 조작하는 임시 레벨 상태(메인/서브1/서브2)
@@ -41,11 +66,17 @@ export default function HexaStat({
 			            sub: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] }
   };
 
+	// 코어별 총 투자 레벨 (메인 + 서브1 + 서브2)
+	const sumLevels = (n) =>
+		(n?.main_stat_level ?? 0) + (n?.sub_stat_level_1 ?? 0) + (n?.sub_stat_level_2 ?? 0);
 	const corelevel = {
-		core: hexaStat?.character_hexa_stat_core?.[0]?.stat_grade ?? "0 0",
-		core_2: hexaStat?.character_hexa_stat_core_2?.[0]?.stat_grade ?? "0 0",
-		core_3: hexaStat?.character_hexa_stat_core_3?.[0]?.stat_grade ?? "0 0",
+		core: sumLevels(hexaStat?.character_hexa_stat_core?.[0]),
+		core_2: sumLevels(hexaStat?.character_hexa_stat_core_2?.[0]),
+		core_3: sumLevels(hexaStat?.character_hexa_stat_core_3?.[0]),
 	}
+	// 편집 중인 값(실시간 합) / 저장 슬롯의 합
+	const uiTotal = uiLevels.main + uiLevels.sub1 + uiLevels.sub2;
+	const savedTotal = sumLevels(savedHexaStat?.[`character_hexa_stat_${selectedCore}`]?.[0]);
 
   // 헥사스탯 뚫었는지 여부
 	const coreUnlocked = {
@@ -76,7 +107,7 @@ export default function HexaStat({
         />
 
         {/* 헥사스탯 아이콘 (열림/닫힘: 슬롯별 disabled 아이콘 사용) */}
-				<span className="absolute top-[20%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">{(corelevel[coreKey] + "").split("").join(" ")}</span>
+				<span className="absolute top-[18%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">{((coreKey === selectedCore ? uiTotal : corelevel[coreKey]) + "").split("").join(" ")}</span>
         <img
 					src={unlocked ? iconPath : disabledIconPath}
 					alt="코어 아이콘"
@@ -231,7 +262,23 @@ export default function HexaStat({
 			exit={{ opacity: 0, y: 0 }}
 			transition={{ duration: 0.3, ease: "easeOut" }}
 		>
-			<div className="fixed top-0 left-0 w-full h-full z-[9999]">
+			<div className="fixed inset-0 z-[9999] overflow-hidden">
+			{/* 보정용 뷰포트 크기 표시 (CALIBRATION 시에만) */}
+			{CALIBRATION && (
+				<div className="fixed top-2 left-2 z-[10001] bg-black/80 text-white text-sm font-mono px-3 py-1 rounded pointer-events-none">
+					{viewport.w} × {viewport.h}
+				</div>
+			)}
+			{/* 디자인 무대: 중앙 배치 + 통째 스케일 */}
+			<div
+				className="absolute left-1/2 top-1/2"
+				style={{
+					width: boxW,
+					height: boxH,
+					transform: `translate(-50%, -50%) scale(${scale})`,
+					transformOrigin: "center center",
+				}}
+			>
 				{/* 헥사 메인 배경 */}
 				<img
 					src="/images/hexa/헥사메인배경.png"
@@ -293,8 +340,8 @@ export default function HexaStat({
 						className={`absolute ${activeSlot === "current" ? "top-[33.3%]" : "top-[34.5%]"} left-[53.35%] z-20 select-none cursor-pointer`}
 						onClick={() => handleSlotClick("current")}
 					>
-						<span className="absolute top-[20%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
-							{(corelevel[selectedCore] + "").split("").join(" ")}
+						<span className="absolute top-[18%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
+							{((activeSlot === "current" ? uiTotal : corelevel[selectedCore]) + "").split("").join(" ")}
 						</span>
 						<img src="/images/hexa/코어.bg.png" alt="코어 슬롯" draggable={false} />
 						<img
@@ -323,7 +370,7 @@ export default function HexaStat({
 						{savedHexaStat ? (
 							<>
 								<span className="absolute top-[19%] left-1/2 -translate-x-1/2 z-10 font-galmuri text-white text-[7px]">
-									{(corelevel[selectedCore] + "").split("").join(" ")}
+									{((activeSlot === "saved" ? uiTotal : savedTotal) + "").split("").join(" ")}
 								</span>
 								<img src="/images/hexa/코어.bg.png" alt="코어 슬롯" draggable={false} />
 								<img
@@ -740,6 +787,7 @@ export default function HexaStat({
 						/>
 					}
 				</AnimatePresence>
+			</div>
 			</div>
 		</motion.div>
   );

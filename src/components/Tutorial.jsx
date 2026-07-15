@@ -43,6 +43,17 @@ export default function Tutorial({ onClose }) {
   const [typingDone, setTypingDone] = useState(false);
   const [skipTyping, setSkipTyping] = useState(false);
 
+  // 헥사 창과 동일하게 1920x945 디자인 박스 기준으로 판 전체를 통째로 스케일한다.
+  const DESIGN_W = 1920;
+  const DESIGN_H = 945;
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const update = () => setScale(Math.min(1, window.innerWidth / DESIGN_W));
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   const script = tutorialScripts[step];
   const lastLine = line === script.texts.length - 1;
   const lastStep = step === tutorialScripts.length - 1;
@@ -99,7 +110,18 @@ export default function Tutorial({ onClose }) {
   }, [step, line]);
 
   return (
-    <div draggable="false" className="fixed inset-0 z-[9999] w-screen h-screen flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] overflow-hidden">
+    {/* 1920x945 고정 디자인 박스: 중앙 배치 + 가로 기준 스케일로 통째 스케일 */}
+    <div
+      draggable="false"
+      className="absolute left-1/2 top-1/2"
+      style={{
+        width: DESIGN_W,
+        height: DESIGN_H,
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        transformOrigin: "center center",
+      }}
+    >
       {/* 튜토리얼 배경 이미지 */}
       <img
         src={script.image}
@@ -176,6 +198,7 @@ export default function Tutorial({ onClose }) {
       >
         ✕
       </button>
+    </div>
     </div>
   );
 }
