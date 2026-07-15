@@ -709,7 +709,7 @@ export default function MainPage() {
         </button>
 
         {/* 헥사스탯 아이콘 - To-Do*/}
-        
+        {/*
         <button className="absolute bottom-[1.2%] left-[12%] w-[10%] transition max-sm:w-[7%]"
           onClick={() => {
             if (isMobile) {
@@ -722,7 +722,7 @@ export default function MainPage() {
             src="/images/hexa/헥사메뉴.normal.png" draggable="false"
             className="custom-cursor hover:content-[url('/images/hexa/헥사메뉴.hover.png')] active:content-[url('/images/hexa/헥사메뉴.pressed.png')]"/>
         </button>
-    
+        */}
 
         {/* 인벤토리 창 */}
         <AnimatePresence>
